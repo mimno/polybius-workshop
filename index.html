@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Polybius Workshop</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gentium+Book+Plus:ital,wght@0,400;0,700;1,400&family=GFS+Didot&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap">
+<style>
+/* Layout: a single reading column with a sticky tab bar; each tool is a "desk" of cards. Porphyry (royal purple of the Hellenistic courts) + bronze on cool paper. */
+:root {
+  --paper: #F6F5F8;
+  --card: #FFFFFF;
+  --ink: #1F1B26;
+  --muted: #615A6B;
+  --rule: #DCD6E3;
+  --porphyry: #6B2148;
+  --porphyry-soft: #F1E4EB;
+  --bronze: #8F621C;
+  --ok: #2E7448;
+  --ok-soft: #E3F1E8;
+  --bad: #A93636;
+  --bad-soft: #F8E5E5;
+  --f-greek: "Gentium Book Plus", "GFS Didot", "Palatino Linotype", "New Athena Unicode", serif;
+  --f-display: "GFS Didot", "Gentium Book Plus", Georgia, serif;
+  --f-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #16131A; --card: #1F1B25; --ink: #ECE7F1; --muted: #A69EB0; --rule: #342D3C;
+  --porphyry: #DB93B8; --porphyry-soft: #3A2231; --bronze: #D7A85C;
+  --ok: #73C493; --ok-soft: #1D3326; --bad: #EC8282; --bad-soft: #3B1F22; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #16131A; --card: #1F1B25; --ink: #ECE7F1; --muted: #A69EB0; --rule: #342D3C;
+  --porphyry: #DB93B8; --porphyry-soft: #3A2231; --bronze: #D7A85C;
+  --ok: #73C493; --ok-soft: #1D3326; --bad: #EC8282; --bad-soft: #3B1F22; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.55 var(--f-ui); margin: 0; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.wrap { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.top { padding-block: 22px 6px; }
+.brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.brand h1 { font: 400 1.9rem/1.1 var(--f-display); margin: 0; letter-spacing: .01em; text-wrap: balance; }
+.brand .gk-title { font: italic 1.05rem var(--f-greek); color: var(--porphyry); }
+.lede { color: var(--muted); margin: 6px 0 0; max-width: 62ch; }
+
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); }
+nav.tabs .wrap { display: flex; gap: 4px; overflow-x: auto; padding-block: 8px; scrollbar-width: none; }
+nav.tabs a { flex: none; text-decoration: none; color: var(--muted); font-weight: 500; padding: 6px 12px; border-radius: 999px; font-size: .92rem; }
+nav.tabs a[aria-current="page"] { background: var(--porphyry); color: var(--paper); }
+nav.tabs a:hover:not([aria-current="page"]) { color: var(--ink); background: var(--porphyry-soft); }
+
+main { padding-block: 18px 60px; }
+section.view { display: grid; gap: 18px; }
+h2 { font: 400 1.5rem/1.2 var(--f-display); margin: 8px 0 0; text-wrap: balance; }
+h3 { font: 600 1rem/1.3 var(--f-ui); margin: 0; text-wrap: balance; }
+.eyebrow { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); font-weight: 600; }
+p { margin: 0; }
+.prose { display: grid; gap: 10px; max-width: 66ch; }
+.muted { color: var(--muted); }
+.small { font-size: .85rem; }
+.gk { font-family: var(--f-greek); }
+a { color: var(--porphyry); }
+:focus-visible { outline: 2px solid var(--porphyry); outline-offset: 2px; }
+
+.panel { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.spread { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+
+button, select, .btn { font: 500 .9rem var(--f-ui); color: var(--ink); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+button:hover { border-color: var(--porphyry); }
+button.primary { background: var(--porphyry); color: var(--paper); border-color: var(--porphyry); }
+button.ghost { background: transparent; }
+button:disabled { opacity: .45; cursor: default; }
+.chip { padding: 5px 11px; border-radius: 999px; font-size: .85rem; }
+.chip[aria-pressed="true"] { background: var(--porphyry); color: var(--paper); border-color: var(--porphyry); }
+.chip.right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.chip.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+textarea, input[type="text"] { width: 100%; font: 1.15rem/1.5 var(--f-greek); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; }
+textarea { min-height: 96px; resize: vertical; }
+label.check { display: inline-flex; gap: 6px; align-items: center; font-size: .9rem; cursor: pointer; }
+
+/* Plan */
+.phase { display: grid; grid-template-columns: 3.2rem 1fr; gap: 14px; }
+.phase .num { font: 400 2.2rem/1 var(--f-display); color: var(--porphyry); }
+.phase ul { margin: 6px 0 0; padding-left: 1.1rem; display: grid; gap: 4px; }
+.phase .weeks { font-size: .8rem; color: var(--bronze); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+.feature { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding-block: 8px; border-bottom: 1px solid var(--rule); }
+.feature:last-child { border-bottom: 0; }
+.feature .ex { font-family: var(--f-greek); color: var(--porphyry); font-size: 1.05rem; }
+.exercise { display: grid; gap: 4px; padding-block: 10px; border-bottom: 1px solid var(--rule); }
+.exercise:last-child { border-bottom: 0; }
+.tag { display: inline-block; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; color: var(--bronze); border: 1px solid var(--rule); border-radius: 4px; padding: 0 5px; margin-left: 6px; vertical-align: 2px; }
+.ms { display: grid; gap: 6px; }
+.ms label { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; cursor: pointer; }
+.ms input { margin-top: 4px; accent-color: var(--porphyry); }
+.today { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.today a { text-decoration: none; color: inherit; border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; background: var(--card); display: grid; gap: 2px; }
+.today a:hover { border-color: var(--porphyry); }
+.today b { font: 400 1.6rem/1 var(--f-display); color: var(--porphyry); font-variant-numeric: tabular-nums; }
+
+/* Flashcards */
+.setpick { display: flex; flex-wrap: wrap; gap: 6px; }
+.setpick label { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px 4px 8px; font-size: .85rem; cursor: pointer; background: var(--card); }
+.setpick input { accent-color: var(--porphyry); }
+.setpick .cnt { color: var(--muted); font-variant-numeric: tabular-nums; }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 28px 20px; min-height: 230px; display: grid; align-content: center; justify-items: center; gap: 14px; text-align: center; }
+.card .front { font: 1.9rem/1.3 var(--f-greek); text-wrap: balance; }
+.card .front.en { font: 500 1.3rem/1.4 var(--f-ui); }
+.card .back { font-size: 1.05rem; max-width: 46ch; }
+.card .back .gk { font-size: 1.35rem; }
+.card .setname { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.grades { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.grades button { display: grid; gap: 1px; padding: 8px 4px; }
+.grades small { font-weight: 400; color: var(--muted); font-size: .72rem; }
+.progress { height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--porphyry); width: 0; transition: width .2s; }
+
+/* Parsing */
+.form-big { font: 2.2rem/1.2 var(--f-greek); text-align: center; padding-block: 6px; }
+.prow { display: grid; grid-template-columns: 5.2rem 1fr; gap: 8px; align-items: center; }
+.prow .lab { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.verdict { border-radius: 8px; padding: 12px 14px; display: grid; gap: 4px; }
+.verdict.good { background: var(--ok-soft); }
+.verdict.no { background: var(--bad-soft); }
+.verdict .head { font-weight: 600; }
+.verdict.good .head { color: var(--ok); }
+.verdict.no .head { color: var(--bad); }
+
+/* Syntax */
+.sentence { font: 1.3rem/1.7 var(--f-greek); }
+.sentence mark { background: var(--porphyry-soft); color: var(--porphyry); padding: 1px 3px; border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.opts button { text-align: left; }
+.opts button.right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.opts button.wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+
+/* Compose */
+.prompt-en { font: 500 1.2rem/1.45 var(--f-ui); }
+.model { font: 1.25rem/1.6 var(--f-greek); }
+.model .hit { color: var(--ok); }
+.betahelp { font: .8rem/1.6 var(--f-mono); color: var(--muted); overflow-x: auto; white-space: pre; }
+
+/* Worksheet (screen + print) */
+#sheet { background: #fff; color: #111; border: 1px solid var(--rule); border-radius: 6px; padding: 28px 26px; font-family: var(--f-ui); overflow-x: auto; }
+#sheet h4 { font: 400 1.35rem var(--f-display); margin: 0 0 2px; color: #111; }
+#sheet .inst { font-size: .85rem; color: #444; margin-bottom: 14px; }
+#sheet table { font-size: .95rem; color: #111; }
+#sheet th, #sheet td { border-bottom: 1px solid #bbb; color: #111; }
+#sheet th { color: #555; }
+#sheet td.gk, #sheet .gk { font: 1.12rem var(--f-greek); }
+#sheet td.blank { height: 2.1em; }
+#sheet .lines div { border-bottom: 1px solid #aaa; height: 2.2em; }
+#sheet .item { margin-bottom: 18px; break-inside: avoid; }
+#sheet .key { break-before: page; margin-top: 30px; padding-top: 18px; border-top: 2px dashed #999; }
+#sheet .fold td.en { border-left: 2px dashed #888; padding-left: 12px; color: #333; }
+#sheet .colo { font: 1.1rem/1.9 var(--f-greek); color: #111; }
+#sheet .colo div { white-space: pre-wrap; }
+#sheet .wide { line-height: 2.6; font: 1.15rem/2.6 var(--f-greek); }
+#sheet .grid td { width: 22%; }
+@media print {
+  @page { margin: 16mm 14mm; }
+  body { background: #fff; }
+  body * { visibility: hidden; }
+  #sheet, #sheet * { visibility: visible; }
+  #sheet { position: absolute; left: 0; top: 0; width: 100%; border: 0; padding: 0; }
+  body::before { display: none; }
+}
+@media (max-width: 520px) {
+  .brand h1 { font-size: 1.55rem; }
+  .card .front { font-size: 1.6rem; }
+  .form-big { font-size: 1.8rem; }
+  .prow { grid-template-columns: 1fr; gap: 4px; }
+  .phase { grid-template-columns: 1fr; gap: 4px; }
+  .grades button { font-size: .82rem; }
+  #sheet { padding: 18px 14px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="brand"><h1>Polybius Workshop</h1><span class="gk-title">πραγματικὴ ἱστορία</span></div>
+  <p class="lede">A forty-week path from low-intermediate Greek to reading Polybius, with drills for vocabulary, parsing, syntax and composition, and printable sheets for pen-and-paper work.</p>
+</div></header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap">
+  <a id="t-plan" href="#plan">Plan</a>
+  <a id="t-vocab" href="#vocab">Vocabulary</a>
+  <a id="t-parse" href="#parse">Parsing</a>
+  <a id="t-syntax" href="#syntax">Syntax</a>
+  <a id="t-compose" href="#compose">Composition</a>
+  <a id="t-print" href="#print">Worksheets</a>
+</div></nav>
+
+<main><div class="wrap">
+
+<!-- ============ PLAN ============ -->
+<section class="view" id="v-plan">
+  <div class="today" id="todayTiles"></div>
+
+  <div class="prose">
+    <span class="eyebrow">The goal</span>
+    <h2>Read Polybius with a lexicon by week 16, and with only occasional lookups by week 40</h2>
+    <p>Plan on 45–60 minutes a day, six days a week. Fifteen minutes of that happens on your phone (vocabulary and quick drills). The rest happens at a desk with the text, a notebook and a pen. Composition runs alongside reading throughout, because writing Greek is the fastest way to make endings and constructions automatic.</p>
+  </div>
+
+  <div class="panel">
+    <h3>What makes Polybius hard, and what to drill for it</h3>
+    <div class="feature"><strong>Long periods built from participles and infinitives.</strong><span class="muted small">Sentences of 60+ words are normal. Drill: colometry in your notebook, the Syntax tab, participle forms in Parsing.</span><span class="ex">ἀναζεύξας … παραγενόμενος … συνιδὼν … ἐποιεῖτο τὴν ἔφοδον</span></div>
+    <div class="feature"><strong>Articular infinitives everywhere.</strong><span class="muted small">Especially after prepositions: διὰ τό (because), ἐν τῷ (while), πρὸς τό (so that), ἅμα τῷ (as soon as).</span><span class="ex">διὰ τὸ μὴ γινώσκειν τοὺς τόπους</span></div>
+    <div class="feature"><strong>Periphrasis with ποιέομαι + abstract noun.</strong><span class="muted small">Polybius prefers "make the march" to "march". Learn the noun and you have the verb.</span><span class="ex">ἐποιεῖτο τὴν πορείαν · ποιεῖσθαι τὴν ἀναχώρησιν</span></div>
+    <div class="feature"><strong>Abstract, Hellenistic vocabulary.</strong><span class="muted small">Words in -σις, -μα, -ία and Polybian senses of common words. The Historian's toolkit deck targets these.</span><span class="ex">διάληψις · ἐπιβολή · προαίρεσις · χειρισμός</span></div>
+    <div class="feature"><strong>Koine spelling and forms.</strong><span class="muted small">γίνομαι and γινώσκω for γίγνομαι/γιγνώσκω; passive aorist ἐγενήθη beside ἐγένετο; ἱππεῖς as an accusative.</span><span class="ex">ἐγενήθη = ἐγένετο</span></div>
+    <div class="feature"><strong>Word order bent to avoid hiatus.</strong><span class="muted small">Polybius avoids a vowel-ending word before a vowel-initial one, so words land in odd places. Read by grammatical agreement, not position.</span><span class="ex">ὑπὸ μίαν ἀρχὴν ἔπεσε τὴν Ῥωμαίων</span></div>
+    <div class="feature"><strong>Authorial cross-references and stock transitions.</strong><span class="muted small">Recognize them instantly and you save a lookup in every paragraph.</span><span class="ex">καθάπερ ἐπάνω προεδηλώσαμεν · κατὰ τὸν αὐτὸν καιρόν</span></div>
+  </div>
+
+  <h2>Four phases</h2>
+  <div class="panel phase"><div class="num">1</div><div>
+    <span class="weeks">Weeks 1–6 · Consolidate the machinery</span>
+    <ul>
+      <li><strong>Morphology to automatic.</strong> Principal parts of the 30 verbs in the Principal parts deck. Every aorist form of τίθημι, ἵστημι, δίδωμι, ἵημι, δείκνυμι. Third declension in -σις, -ευς, -ος/-ους.</li>
+      <li><strong>Vocabulary.</strong> Decks: Historian's toolkit, Verbs & idioms, Connectives, Principal parts. 10 new cards a day.</li>
+      <li><strong>Bridge reading.</strong> Xenophon, <em>Anabasis</em> 1: armies, camps, marches and battles in simpler prose, two pages a week, fully parsed in your notebook.</li>
+      <li><strong>Composition.</strong> Guided sentences, tier 1. A synopsis sheet twice a week.</li>
+      <li><strong>Exit check.</strong> 90% or better on 20 parsing items; a synopsis of τίθημι from memory with no more than three errors.</li>
+    </ul></div></div>
+  <div class="panel phase"><div class="num">2</div><div>
+    <span class="weeks">Weeks 7–16 · First Polybius, fully supported</span>
+    <ul>
+      <li><strong>Reading, in this order.</strong> 1.20–1.23 (Rome builds a fleet; the κόραξ boarding bridge) → 3.47–3.56 (Hannibal crosses the Alps) → 1.1–1.5 (the preface, the hardest part, saved until now). 15–20 lines a session.</li>
+      <li><strong>Method.</strong> The three-pass method below. Look at a translation only after your own written attempt.</li>
+      <li><strong>Vocabulary.</strong> Add Army & war, Terrain & march, Peoples & places.</li>
+      <li><strong>Syntax.</strong> Syntax drill daily (5 min). One colometry sheet a week on a preface sentence.</li>
+      <li><strong>Composition.</strong> Tier 2 sentences, 3 per session, twice a week.</li>
+      <li><strong>Exit check.</strong> A fresh 10 lines of Book 3 in 30 minutes with a lexicon, with a written translation you could defend.</li>
+    </ul></div></div>
+  <div class="panel phase"><div class="num">3</div><div>
+    <span class="weeks">Weeks 17–30 · Range and speed</span>
+    <ul>
+      <li><strong>Reading.</strong> 3.6–3.15 (causes of the Hannibalic War: αἰτία, πρόφασις, ἀρχή; Saguntum) → 3.107–3.117 (Cannae) → 6.11–6.18 (the Roman constitution) → selections from 6.19–6.42 (army and camp) → 29.27 (Popillius draws a circle around Antiochus).</li>
+      <li><strong>Method shift.</strong> First pass fast with no writing, marking only what stops you. Then a focused second pass on the marked spots.</li>
+      <li><strong>Vocabulary.</strong> Add State & diplomacy and Qualities & judgments. Start a personal word list in your notebook from your reading.</li>
+      <li><strong>Composition.</strong> Tier 3 sentences, and a weekly back-translation of one Polybius paragraph.</li>
+      <li><strong>Exit check.</strong> One Loeb page of Greek in 40 minutes.</li>
+    </ul></div></div>
+  <div class="panel phase"><div class="num">4</div><div>
+    <span class="weeks">Weeks 31–40 and beyond · Reading for content</span>
+    <ul>
+      <li><strong>Reading.</strong> A whole book (1 or 3) straight through. Then 10.2–10.20 (Scipio takes New Carthage), 31.23–31.30 (Polybius and Scipio Aemilianus), 38.21–38.22 (Scipio at the fall of Carthage), and Book 12 on how history should be written.</li>
+      <li><strong>Vocabulary.</strong> Keep reviews to 10 minutes. New cards only from your own reading.</li>
+      <li><strong>Composition.</strong> One 150-word paragraph a month in Polybian style. For example, narrate a modern event with his transitions and periphrases.</li>
+      <li><strong>Exit check.</strong> Two Loeb pages an hour with occasional lookups.</li>
+    </ul></div></div>
+
+  <div class="panel">
+    <h3>A normal week</h3>
+    <div class="tablewrap"><table>
+      <thead><tr><th>When</th><th>Where</th><th>What</th></tr></thead>
+      <tbody>
+        <tr><td>Every day, 15 min</td><td>Phone</td><td>Vocabulary reviews (10 min), then Parsing or Syntax drill (5 min)</td></tr>
+        <tr><td>Mon · Wed · Fri, 40 min</td><td>Desk</td><td>Reading session (three-pass method)</td></tr>
+        <tr><td>Tue · Thu, 30 min</td><td>Desk + notebook</td><td>Composition (3–5 sentences) + one printed sheet</td></tr>
+        <tr><td>Sat, 30 min</td><td>Notebook</td><td>Reread the week's Greek aloud, colometry of one long sentence, update your phrasebook</td></tr>
+        <tr><td>Sun</td><td></td><td>Rest, or read the week's passages in English for context</td></tr>
+      </tbody></table></div>
+  </div>
+
+  <div class="panel">
+    <h3>The three-pass reading method</h3>
+    <div class="exercise"><strong>Pass 1: parse.</strong><span class="muted">Read the passage aloud once. Then, in your notebook, list every finite verb and participle with a full parse and lemma. Look up only what you can't parse.</span></div>
+    <div class="exercise"><strong>Pass 2: translate.</strong><span class="muted">Write a literal translation, keeping clause boundaries visible. Then compare with the Loeb or Shuckburgh and mark each disagreement in the margin: <em>V</em> (vocabulary), <em>M</em> (morphology), <em>S</em> (syntax).</span></div>
+    <div class="exercise"><strong>Pass 3: reread.</strong><span class="muted">Two days later, read the Greek aloud with no notes. Any phrase that still stops you goes into the phrasebook or onto a card.</span></div>
+  </div>
+
+  <div class="panel">
+    <h3>Paper exercises (printouts or a lined notebook)</h3>
+    <p class="muted small">Every exercise marked <span class="tag">print</span> can be generated on the Worksheets tab. The rest need only a notebook.</p>
+    <div class="exercise"><strong>Paradigm from memory <span class="tag">notebook</span></strong><span class="muted">Write a full paradigm (for example the aorist middle of τίθημι) from memory. Check it against a grammar and correct in red. Tomorrow, rewrite only the cells you got wrong.</span></div>
+    <div class="exercise"><strong>Verb synopsis <span class="tag">print</span></strong><span class="muted">One verb, one person and number, every tense, mood and voice. The single best check on whether a verb's system is in your head.</span></div>
+    <div class="exercise"><strong>Principal-parts ladder <span class="tag">print</span></strong><span class="muted">The present is given; write the other five parts. Cover the answer key with the folded sheet.</span></div>
+    <div class="exercise"><strong>Colometry of a period <span class="tag">print</span></strong><span class="muted">Copy a long Polybian sentence one clause per line, indenting each dependent clause under what it depends on. Box finite verbs, circle participles, underline infinitives, and draw an arrow from each relative pronoun to its antecedent. This is the core skill for Polybius.</span></div>
+    <div class="exercise"><strong>Polybian phrasebook <span class="tag">notebook</span></strong><span class="muted">Reserve the back pages of your notebook. Formula on the left page, gloss and reference on the right. Start with: κατὰ τὸν αὐτὸν καιρόν · ὡς ἐπάνω διεσαφήσαμεν · ποιεῖσθαι τὴν πορείαν · ἐγκρατὴς γίνεσθαι + gen. · ἐπὶ τοσοῦτον … ὥστε · οὐ μὴν ἀλλά.</span></div>
+    <div class="exercise"><strong>Copywork with accents <span class="tag">notebook</span></strong><span class="muted">Copy five lines of the passage you are reading, accents and breathings included, then read them aloud. It slows your eye down to the level of endings and fixes accent patterns.</span></div>
+    <div class="exercise"><strong>Fold-sheet vocabulary <span class="tag">print</span></strong><span class="muted">Greek on the left, English on the right. Fold the sheet down the dashed line and test yourself both ways. Tick the ones you missed and add them to your phrasebook.</span></div>
+    <div class="exercise"><strong>Back-translation <span class="tag">print</span></strong><span class="muted">Monday: translate 6–8 lines of Polybius into English. Thursday: translate your English back into Greek without looking. Then compare and mark differences in three colors: vocabulary, morphology, word order/idiom.</span></div>
+    <div class="exercise"><strong>Parsing grids and declension grids <span class="tag">print</span></strong><span class="muted">Quick 10-minute warm-ups before a reading session.</span></div>
+  </div>
+
+  <div class="panel">
+    <h3>Composition track</h3>
+    <p class="muted">Tier 1 (weeks 1–6): correct forms in short sentences. Tier 2 (weeks 7–16): one Polybian construction per sentence (genitive absolute, articular infinitive, ποιέομαι periphrasis, result and purpose). Tier 3 (weeks 17+): full periods and back-translation of real passages. For more sentences, work through North &amp; Hillard, <em>Greek Prose Composition</em> (1898), selecting the exercises on participles, infinitives, and conditions. It is old and Attic, but its drills transfer directly.</p>
+  </div>
+
+  <div class="panel">
+    <h3>Resources</h3>
+    <div class="tablewrap"><table><tbody>
+      <tr><td><strong>Text</strong></td><td>Büttner-Wobst Greek text with Shuckburgh's translation on <a href="https://scaife.perseus.org/" target="_blank" rel="noopener">Scaife Viewer</a> / Perseus (free). Loeb <em>Polybius</em>, tr. Paton, rev. Walbank &amp; Habicht (6 vols.), for facing-page work.</td></tr>
+      <tr><td><strong>Lexicon</strong></td><td><a href="https://logeion.uchicago.edu/" target="_blank" rel="noopener">Logeion</a> (LSJ and others; there is a phone app). Mauersberger, <em>Polybios-Lexikon</em>, for Polybian senses if you read German.</td></tr>
+      <tr><td><strong>Grammar</strong></td><td>Smyth, <em>Greek Grammar</em>, for constructions. Goodwin, <em>Syntax of the Moods and Tenses</em>, for conditions and indirect discourse.</td></tr>
+      <tr><td><strong>Commentary</strong></td><td>Walbank, <em>A Historical Commentary on Polybius</em> (3 vols.): mostly historical, but it explains many difficult sentences.</td></tr>
+      <tr><td><strong>Core vocab</strong></td><td>Dickinson College Commentaries' Greek Core Vocabulary (≈500 most common words). Keep it in your rotation if anything there is shaky.</td></tr>
+    </tbody></table></div>
+  </div>
+
+  <div class="panel">
+    <div class="spread"><h3>Milestones</h3><span class="muted small" id="msCount"></span></div>
+    <div class="ms" id="milestones"></div>
+  </div>
+
+  <div class="panel">
+    <h3>Back up your progress</h3>
+    <p class="muted small">Progress is saved in this browser only, so your phone and laptop keep separate records. To move it, copy the backup on one device and paste it into the box on the other.</p>
+    <div class="row"><button id="bkCopy">Copy backup</button><button id="bkLoad">Restore from box</button><span class="small muted" id="bkMsg"></span></div>
+    <textarea id="bkBox" class="small" style="font: .8rem/1.4 var(--f-mono); min-height: 70px" placeholder="Paste a backup here, then press Restore from box."></textarea>
+  </div>
+</section>
+
+<!-- ============ VOCAB ============ -->
+<section class="view" id="v-vocab" hidden>
+  <div class="prose"><span class="eyebrow">Spaced repetition</span><h2>Vocabulary</h2>
+  <p class="muted">Choose decks, then review. Cards you know come back at growing intervals (1, 2, 4, 8, 16 days…). New cards are introduced in the order listed, which puts the most Polybian words first.</p></div>
+  <div class="panel">
+    <div class="setpick" id="setPick"></div>
+    <div class="row small">
+      <label class="check"><input type="radio" name="dir" value="ge" id="dirGe"> Greek → English</label>
+      <label class="check"><input type="radio" name="dir" value="eg" id="dirEg"> English → Greek</label>
+      <label class="check">New per day <select id="perDay"><option>5</option><option>10</option><option>15</option><option>20</option><option>30</option></select></label>
+    </div>
+  </div>
+  <div class="spread small muted"><span id="vStatus"></span><span id="vKnown"></span></div>
+  <div class="progress"><i id="vBar"></i></div>
+  <div class="card" id="vCard"></div>
+  <div id="vControls"></div>
+  <p class="muted small">On a keyboard: Space shows the answer; 1–4 grade it.</p>
+</section>
+
+<!-- ============ PARSE ============ -->
+<section class="view" id="v-parse" hidden>
+  <div class="prose"><span class="eyebrow">Morphology</span><h2>Parsing</h2>
+  <p class="muted">Forms Polybius actually uses. Tap a value in each row, then check. Some forms are ambiguous; any correct reading counts, and the answer lists them all.</p></div>
+  <div class="spread">
+    <div class="row" id="pFilter">
+      <button class="chip" data-f="all" aria-pressed="true">All</button>
+      <button class="chip" data-f="v" aria-pressed="false">Verbs</button>
+      <button class="chip" data-f="n" aria-pressed="false">Nouns &amp; adjectives</button>
+    </div>
+    <span class="small muted" id="pScore"></span>
+  </div>
+  <div class="panel">
+    <div class="form-big" id="pForm"></div>
+    <div id="pRows" style="display:grid;gap:10px"></div>
+    <div class="row"><button class="primary" id="pCheck">Check</button><button id="pNext" class="ghost">Skip</button></div>
+    <div id="pResult"></div>
+  </div>
+</section>
+
+<!-- ============ SYNTAX ============ -->
+<section class="view" id="v-syntax" hidden>
+  <div class="prose"><span class="eyebrow">Recognition</span><h2>Syntax</h2>
+  <p class="muted">Name the construction of the highlighted words. Sentences come from Polybius (lightly adapted; check the wording against the text before memorizing) or are written in his style.</p></div>
+  <div class="spread small muted"><span id="sSrc"></span><span id="sScore"></span></div>
+  <div class="panel">
+    <div class="sentence" id="sGreek"></div>
+    <div class="opts" id="sOpts"></div>
+    <div id="sResult"></div>
+    <div class="row"><button class="primary" id="sNext">Next sentence</button></div>
+  </div>
+</section>
+
+<!-- ============ COMPOSE ============ -->
+<section class="view" id="v-compose" hidden>
+  <div class="prose"><span class="eyebrow">Production</span><h2>Composition</h2>
+  <p class="muted">Write the Greek, then compare with a model. Grade yourself honestly: the match count is a rough guide, since there is usually more than one right answer.</p></div>
+  <div class="row">
+    <select id="cDeck" aria-label="Deck">
+      <option value="t1">Tier 1 · Forms</option>
+      <option value="t2">Tier 2 · Polybian constructions</option>
+      <option value="t3">Tier 3 · Periods &amp; style</option>
+      <option value="bt">Back-translation · from the Syntax sentences</option>
+    </select>
+    <span class="small muted" id="cPos"></span>
+  </div>
+  <div class="panel">
+    <div class="prompt-en" id="cPrompt"></div>
+    <div class="row"><button class="ghost small" id="cHintBtn">Show hint</button></div>
+    <p class="muted small" id="cHint" hidden></p>
+    <textarea id="cInput" placeholder="Type Greek, or Beta Code: e)poiei=to th\n porei/an" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+    <div class="spread small">
+      <label class="check"><input type="checkbox" id="cBeta" checked> Convert Beta Code as I type</label>
+      <button class="ghost small" id="cBetaHelpBtn">Beta Code keys</button>
+    </div>
+    <pre class="betahelp" id="cBetaHelp" hidden>a α  b β  g γ  d δ  e ε  z ζ  h η  q θ  i ι  k κ  l λ  m μ
+n ν  c ξ  o ο  p π  r ρ  s σ/ς  t τ  u υ  f φ  x χ  y ψ  w ω
+After a letter:  )  smooth   (  rough   /  acute   \  grave
+                 =  circumflex   |  iota subscript   +  diaeresis
+Capital: type the letter in upper case (A) or put * before it.
+Examples:  a)/nqrwpos → ἄνθρωπος    th=| → τῇ    *(rwmai=oi → Ῥωμαῖοι
+:  → ·  (raised dot)</pre>
+    <div class="row"><button class="primary" id="cCompare">Compare</button><button id="cPrev" class="ghost">Previous</button><button id="cNext" class="ghost">Next</button></div>
+    <div id="cResult"></div>
+  </div>
+</section>
+
+<!-- ============ PRINT ============ -->
+<section class="view" id="v-print" hidden>
+  <div class="prose"><span class="eyebrow">Pen and paper</span><h2>Worksheets</h2>
+  <p class="muted">Pick a sheet and press Make sheet; each press draws a new random selection. To print, open the <code>index.html</code> file from your GreekTutor folder in a browser and press ⌘P. Only the sheet prints, with its answer key on a separate page. On a phone, use the sheet as a prompt and write the answers in your notebook.</p></div>
+  <div class="panel">
+    <div class="row">
+      <select id="wType" aria-label="Sheet type">
+        <option value="fold">Vocabulary · fold sheet</option>
+        <option value="recall">Vocabulary · recall with key</option>
+        <option value="parse">Parsing grid</option>
+        <option value="pp">Principal-parts ladder</option>
+        <option value="synopsis">Verb synopsis</option>
+        <option value="decl">Declension grids</option>
+        <option value="syntax">Syntax: mark &amp; translate</option>
+        <option value="compose">Composition sentences</option>
+        <option value="colo">Colometry of a period</option>
+      </select>
+      <select id="wSet" aria-label="Vocabulary deck"></select>
+      <select id="wVerb" aria-label="Verb" hidden></select>
+      <select id="wCount" aria-label="Number of items"><option>10</option><option selected>20</option><option>30</option><option>40</option></select>
+      <label class="check"><input type="checkbox" id="wKey" checked> Answer key</label>
+      <button class="primary" id="wMake">Make sheet</button>
+    </div>
+  </div>
+  <div id="sheet"></div>
+</section>
+
+</div></main>
+
+<script>
+/* =========================================================
+   DATA
+   ========================================================= */
+const VOCAB = {
+ method: {name: "Historian’s toolkit", items: [
+  ["ἱστορία, -ας, ἡ","inquiry; history, historical work"],
+  ["πραγματεία, -ας, ἡ","systematic treatise; P.’s word for his own Histories"],
+  ["πραγματικός, -ή, -όν","dealing with public affairs; ἡ πραγματικὴ ἱστορία = political-military history"],
+  ["τύχη, -ης, ἡ","fortune, chance; Fortune"],
+  ["οἰκουμένη, -ης, ἡ","the inhabited world (sc. γῆ)"],
+  ["αἰτία, -ας, ἡ","cause; charge, blame"],
+  ["πρόφασις, -εως, ἡ","pretext, alleged reason"],
+  ["ἀπόδειξις, -εως, ἡ","demonstration, proof"],
+  ["ἀποδείκνυμι","show, prove; appoint, proclaim (a magistrate)"],
+  ["διάληψις, -εως, ἡ","judgment, view, opinion"],
+  ["διαλαμβάνω","divide, distinguish; form a judgment; treat (a subject)"],
+  ["ἐπιβολή, -ῆς, ἡ","design, project, undertaking"],
+  ["προαίρεσις, -εως, ἡ","deliberate choice; policy, principle"],
+  ["πρόθεσις, -εως, ἡ","purpose, plan"],
+  ["ὑπόθεσις, -εως, ἡ","subject, theme (of a work); proposal"],
+  ["ἐντυγχάνω + dat.","meet with; read (a book); οἱ ἐντυγχάνοντες = readers"],
+  ["προειρημένος, -η, -ον","aforementioned (pf. pass. ptc. of προλέγω / προεῖπον)"],
+  ["διασαφέω","make clear, explain"],
+  ["προδηλόω","make clear beforehand; ὡς προεδηλώσαμεν = as we showed before"],
+  ["ἐφίστημι","set over; (intr.) stand near; (+ ἐπί or alone) pay attention, note"],
+  ["ἐπίστασις, -εως, ἡ","attention, reflection; halt"],
+  ["καθόλου","on the whole, in general; ἡ καθόλου ἱστορία = universal history; (w/ neg.) at all"],
+  ["κατὰ μέρος","in detail, one by one; αἱ κατὰ μέρος ἱστορίαι = monographs"],
+  ["σωματοειδής, -ές","forming a body, an organic whole"],
+  ["συντέλεια, -ας, ἡ","completion, consummation"],
+  ["περιπέτεια, -ας, ἡ","sudden reversal of fortune"],
+  ["μεταβολή, -ῆς, ἡ","change; revolution"],
+  ["ὠφέλεια, -ας, ἡ","benefit, usefulness"],
+  ["ὠφέλιμος, -ον","useful, profitable"],
+  ["τέρψις, -εως, ἡ","enjoyment, pleasure (contrasted with ὠφέλεια)"],
+  ["ἐμπειρία, -ας, ἡ","experience, practical skill"],
+  ["ἀκρίβεια, -ας, ἡ","exactness, precision"],
+  ["χειρίζω","handle, manage, administer"],
+  ["χειρισμός, -οῦ, ὁ","handling, management"],
+  ["οἰκονομία, -ας, ἡ","management, arrangement; disposition of material"],
+  ["κατασκευάζω","equip, construct, prepare; establish (a point)"],
+  ["κατασκευή, -ῆς, ἡ","construction, preparation; equipment"],
+  ["θεωρία, -ας, ἡ","viewing, study, contemplation"],
+  ["συνθεωρέω","view together, survey as a whole"],
+  ["ἐξηγέομαι","lead; explain, narrate"],
+  ["ἐπισημαίνομαι","mark, note; signal (approval)"],
+  ["παρέκβασις, -εως, ἡ","digression"],
+  ["συγγραφεύς, -έως, ὁ","prose writer, historian"],
+  ["ἀναγνώστης, -ου, ὁ","reader"],
+  ["ὑπόμνημα, -ατος, τό","reminder; record, memoir"],
+  ["ὑπόμνησις, -εως, ἡ","reminding, recollection"]
+ ]},
+ verbs: {name: "Verbs & idioms", items: [
+  ["συμβαίνω","happen, turn out; συμβαίνει + acc. & inf. = it happens that"],
+  ["γίνομαι (= γίγνομαι)","become, happen; aor. ἐγενόμην, also ἐγενήθην (Koine)"],
+  ["ποιέομαι + verbal noun","make (periphrasis): ποιεῖσθαι τὴν πορείαν = march"],
+  ["ὑπάρχω","begin; be, exist; τὰ ὑπάρχοντα = resources"],
+  ["καθίστημι","appoint, establish; (intr.) be established, become"],
+  ["ἐπιβάλλω","throw on; (intr. & mid.) set about, attempt; ἐπιβάλλει = it falls to"],
+  ["προτίθημι","set before; (mid.) propose to oneself, intend"],
+  ["διατίθημι","arrange, dispose; (pass.) be disposed, feel"],
+  ["ἐπιχειρέω + dat. or inf.","attempt; attack"],
+  ["παραγίνομαι","arrive, be present"],
+  ["καταλαμβάνω","seize, occupy; overtake; find"],
+  ["παραλαμβάνω","receive, take over; take with one"],
+  ["συνίστημι","put together; (intr.) be formed, arise (of a war)"],
+  ["χράομαι + dat.","use, employ; experience; treat"],
+  ["δοκέω","seem; δοκεῖ (+ dat. & inf.) = it seems good, is resolved"],
+  ["ἔξεστι","it is possible, permitted; ἐξόν (acc. abs.) = it being possible"],
+  ["μέλλω + inf.","be about to; intend; delay"],
+  ["διανοέομαι","intend; think"],
+  ["ὑπολαμβάνω","take up; assume, suppose"],
+  ["φαίνομαι","appear; + ptc. = clearly am; + inf. = seem to"],
+  ["πειράομαι","try, attempt"],
+  ["σπουδάζω","be eager, busy oneself"],
+  ["ἐπιτελέω","accomplish, complete"],
+  ["ἐγχειρίζω","put into one’s hands, entrust"],
+  ["περιγίνομαι + gen.","prevail over; survive"],
+  ["ἀποβαίνω","turn out, result; τὸ ἀποβαῖνον = the outcome"],
+  ["ἀκολουθέω + dat.","follow"],
+  ["ἀκόλουθος, -ον + dat.","following; consistent with"],
+  ["μετέχω + gen.","share in, take part in"],
+  ["ἀφικνέομαι","arrive"],
+  ["προσδέχομαι","receive; expect, await"],
+  ["ἐκπέμπω","send out, dispatch"],
+  ["διαφθείρω","destroy, ruin; corrupt"],
+  ["ἀγνοέω","not know, be ignorant of"],
+  ["ἐκτίθημι","set out, expound"],
+  ["ἐκφέρω","carry out; publish; (pass.) be carried away"],
+  ["συνοράω","see together, perceive clearly (aor. συνεῖδον)"],
+  ["ἐπιτίθημι","put upon; (mid. + dat.) attack"],
+  ["αἰσθάνομαι","perceive (+ acc. & ptc. = perceive that)"]
+ ]},
+ glue: {name: "Connectives & adverbs", items: [
+  ["διόπερ","for which very reason, therefore"],
+  ["διό","wherefore, therefore"],
+  ["καθάπερ","just as"],
+  ["κατὰ τὸν αὐτὸν καιρόν","at the same time (stock transition)"],
+  ["καιρός, -οῦ, ὁ","right moment; time; οἱ καιροί = circumstances, crisis"],
+  ["πρᾶγμα, -ατος, τό","deed, affair; τὰ πράγματα = affairs of state, power"],
+  ["οὐ μὴν ἀλλά","nevertheless, however"],
+  ["ὅθεν","from where; hence"],
+  ["καθ’ ὅσον","in so far as"],
+  ["πλήν","except (+ gen.); however"],
+  ["ὅμως","nevertheless"],
+  ["καίπερ + ptc.","although"],
+  ["μέχρι (+ gen.)","as far as, until"],
+  ["ἅμα","at the same time; (+ dat.) with; ἅμα τῷ + inf. = as soon as"],
+  ["εὐθέως","at once, immediately"],
+  ["παραχρῆμα","on the spot, immediately"],
+  ["λοιπόν","finally; henceforth"],
+  ["σχεδόν","nearly, almost; roughly"],
+  ["ἁπλῶς","simply; absolutely, in a word"],
+  ["πάλιν","back, again; on the other hand"],
+  ["ἐπὶ τοσοῦτον","to such a degree"],
+  ["οἷον","such as, for instance; as it were"],
+  ["ὡς ἔπος εἰπεῖν","so to speak, practically"],
+  ["μὲν οὖν","so then; (resumptive) well"],
+  ["ἐπάνω","above; earlier in the work (ὡς ἐπάνω προείπομεν)"]
+ ]},
+ war: {name: "Army & war", items: [
+  ["στρατόπεδον, -ου, τό","camp; army"],
+  ["παρεμβολή, -ῆς, ἡ","camp (Hellenistic); line of battle"],
+  ["δύναμις, -εως, ἡ","power; military force, army"],
+  ["στρατηγός, -οῦ, ὁ","general; (Roman) praetor or commander"],
+  ["πεζός, -ή, -όν","on foot; οἱ πεζοί = infantry"],
+  ["ἱππεύς, -έως, ὁ","horseman; pl. cavalry"],
+  ["ὁρμάω","set in motion; (intr. & pass.) start, rush; ὁρμᾶσθαι ἐκ = use as a base"],
+  ["ὁρμή, -ῆς, ἡ","onset, impulse, eagerness"],
+  ["ἀναζεύγνυμι","break camp, march off"],
+  ["προάγω","lead forward; advance"],
+  ["ἔφοδος, -ου, ἡ","approach; attack, assault"],
+  ["στρατοπεδεύω","encamp (also mid.)"],
+  ["στράτευμα, -ατος, τό","army"],
+  ["τάξις, -εως, ἡ","arrangement; rank, battle-line"],
+  ["τάττω (τάσσω)","draw up, arrange; appoint"],
+  ["παράταξις, -εως, ἡ","battle-array; pitched battle"],
+  ["κέρας, -ατος (-ως), τό","horn; wing of an army or fleet"],
+  ["φάλαγξ, -αγγος, ἡ","phalanx; battle-line"],
+  ["σημαία, -ας, ἡ","standard; (Roman) maniple"],
+  ["σπεῖρα, -ας, ἡ","maniple, cohort"],
+  ["χιλίαρχος, -ου, ὁ","military tribune"],
+  ["ταξίαρχος, -ου, ὁ","(Roman) centurion"],
+  ["συμπλέκω","twine together; (pass.) close with, engage"],
+  ["συμμείγνυμι (συμμίσγω)","mix; (+ dat.) join; engage in battle with"],
+  ["κίνδυνος, -ου, ὁ","danger; battle"],
+  ["κινδυνεύω","run a risk; fight a battle"],
+  ["καταπλήττω","strike with terror"],
+  ["κατάπληξις, -εως, ἡ","terror, consternation"],
+  ["ἡττάομαι","be defeated"],
+  ["ἧττα, -ης, ἡ","defeat"],
+  ["ἀναχωρέω","withdraw, retreat"],
+  ["ἐνέδρα, -ας, ἡ","ambush"],
+  ["φυγή, -ῆς, ἡ","flight; exile"],
+  ["πολιορκέω","besiege"],
+  ["πολιορκία, -ας, ἡ","siege"],
+  ["στόλος, -ου, ὁ","fleet; expedition"],
+  ["ναυμαχία, -ας, ἡ","sea-battle"],
+  ["πεντήρης, -ους, ἡ","quinquereme"],
+  ["κόραξ, -ακος, ὁ","raven; the Roman boarding-bridge (Plb. 1.22)"],
+  ["ἐπιβάτης, -ου, ὁ","marine, soldier on shipboard"],
+  ["ἀποσκευή, -ῆς, ἡ","baggage, baggage-train"],
+  ["χορηγία, -ας, ἡ","supplies, resources, funds"],
+  ["ἐπισιτισμός, -οῦ, ὁ","provisioning, supplies"],
+  ["φρουρά, -ᾶς, ἡ","guard, garrison"],
+  ["αἰχμάλωτος, -ον","captured; (subst.) prisoner of war"],
+  ["τραυματίας, -ου, ὁ","wounded man"]
+ ]},
+ land: {name: "Terrain & march", items: [
+  ["τόπος, -ου, ὁ","place; οἱ τόποι = region, terrain"],
+  ["χώρα, -ας, ἡ","land, territory, country"],
+  ["πορεία, -ας, ἡ","march, journey"],
+  ["ὑπερβολή, -ῆς, ἡ","crossing (of a mountain pass); excess"],
+  ["ὑπερβάλλω","cross over; exceed, surpass"],
+  ["δυσχωρία, -ας, ἡ","difficult ground"],
+  ["κρημνός, -οῦ, ὁ","cliff, precipice"],
+  ["χιών, -όνος, ἡ","snow"],
+  ["ὀχυρός, -ά, -όν","strong, fortified, secure"],
+  ["διάβασις, -εως, ἡ","crossing (of a river)"],
+  ["διαβαίνω","cross"],
+  ["ποταμός, -οῦ, ὁ","river"],
+  ["πεδίον, -ου, τό","plain"],
+  ["ἄκρα, -ας, ἡ","height, citadel; headland"],
+  ["λιμήν, -ένος, ὁ","harbor"],
+  ["θάλαττα, -ης, ἡ","sea"]
+ ]},
+ state: {name: "State & diplomacy", items: [
+  ["πολιτεία, -ας, ἡ","constitution; state; citizenship"],
+  ["σύγκλητος, -ου, ἡ","the Roman senate (sc. βουλή)"],
+  ["ὕπατος, -ου, ὁ","consul (lit. ‘highest’)"],
+  ["πρεσβευτής, -οῦ, ὁ","ambassador (pl. also πρέσβεις)"],
+  ["πρεσβεία, -ας, ἡ","embassy"],
+  ["συμμαχία, -ας, ἡ","alliance"],
+  ["σύμμαχος, -ον","allied; (subst.) ally"],
+  ["συνθῆκαι, -ῶν, αἱ","treaty, agreement"],
+  ["σπονδαί, -ῶν, αἱ","truce, treaty (lit. libations)"],
+  ["ἀρχή, -ῆς, ἡ","beginning; rule, empire; magistracy"],
+  ["ἐξουσία, -ας, ἡ","authority, power; license"],
+  ["ἡγεμονία, -ας, ἡ","leadership, hegemony"],
+  ["δυναστεία, -ας, ἡ","power, lordship; dynasty"],
+  ["πολίτευμα, -ατος, τό","form of government, constitution"],
+  ["ἀνακύκλωσις, -εως, ἡ","cycle (of constitutions)"],
+  ["μοναρχία, -ας, ἡ","rule of one, monarchy"],
+  ["ὀχλοκρατία, -ας, ἡ","mob-rule (P.’s degenerate democracy)"],
+  ["δήμαρχος, -ου, ὁ","tribune of the plebs"],
+  ["δῆμος, -ου, ὁ","the people; (at Rome) the popular assembly"],
+  ["κοινός, -ή, -όν","common; τὸ κοινόν = league, federal state"],
+  ["ἔθνος, -ους, τό","people, nation, tribe"],
+  ["πίστις, -εως, ἡ","trust, good faith; pledge (Lat. fides)"],
+  ["στάσις, -εως, ἡ","faction, civil strife"],
+  ["διαφορά, -ᾶς, ἡ","difference; quarrel, dispute"],
+  ["ἀντιποιέομαι + gen.","lay claim to, contend for"],
+  ["ἀμφισβητέω","dispute, disagree"],
+  ["ἀφίστημι","cause to revolt; (intr. & mid.) revolt from"],
+  ["ἀπόστασις, -εως, ἡ","revolt, defection"],
+  ["ὑποχείριος, -ον","under one’s hand, subject"],
+  ["ἐγκρατής, -ές + gen.","in control of; ἐγκρατὴς γίνεσθαι = gain possession of"],
+  ["κρατέω + gen.","rule, get control of; (+ acc.) defeat"],
+  ["ἐπικρατέω","prevail over, conquer"],
+  ["φιλανθρωπία, -ας, ἡ","humanity, kindness; (pl.) privileges, favors"]
+ ]},
+ mind: {name: "Qualities & judgments", items: [
+  ["ἀξιόλογος, -ον","noteworthy, considerable"],
+  ["ἀξιόχρεως, -ων","trustworthy; adequate, sufficient"],
+  ["ἐπιφανής, -ές","conspicuous, famous"],
+  ["εἰκότως","reasonably, naturally"],
+  ["παράλογος, -ον","unexpected; τὸ παράλογον = the unexpected"],
+  ["παραλόγως","contrary to expectation"],
+  ["κατὰ λόγον","reasonably; as one might expect"],
+  ["ἐπιεικῶς","fairly, reasonably; tolerably"],
+  ["ἀγχίνοια, -ας, ἡ","shrewdness, quick wit"],
+  ["εὐψυχία, -ας, ἡ","courage, good spirits"],
+  ["τόλμα, -ης, ἡ","daring, recklessness"],
+  ["φρόνησις, -εως, ἡ","practical wisdom"],
+  ["ἀλογιστία, -ας, ἡ","thoughtlessness, folly"],
+  ["ἀβουλία, -ας, ἡ","ill-advisedness"],
+  ["φιλοτιμία, -ας, ἡ","ambition; zeal, generosity"],
+  ["προθυμία, -ας, ἡ","eagerness, zeal"],
+  ["εὔνοια, -ας, ἡ","goodwill"],
+  ["πλεονεξία, -ας, ἡ","greed, desire for more"],
+  ["φθόνος, -ου, ὁ","envy, ill-will"],
+  ["προσδοκία, -ας, ἡ","expectation"],
+  ["ὑποψία, -ας, ἡ","suspicion"],
+  ["δυσχερής, -ές","difficult, annoying, unpleasant"],
+  ["λυσιτελής, -ές","profitable, advantageous"]
+ ]},
+ names: {name: "Peoples & places", items: [
+  ["Ῥωμαῖοι, -ων, οἱ","Romans"],
+  ["Καρχηδόνιοι, -ων, οἱ","Carthaginians"],
+  ["Καρχηδών, -όνος, ἡ","Carthage"],
+  ["Λιβύη, -ης, ἡ","Africa (Libya)"],
+  ["Ἰβηρία, -ας, ἡ","Spain"],
+  ["Κελτοί, -ῶν, οἱ","Celts, Gauls"],
+  ["Ἄλπεις, -εων, αἱ","the Alps"],
+  ["Ἀννίβας, -ου, ὁ","Hannibal"],
+  ["Ἀχαιοί, -ῶν, οἱ","Achaeans (the Achaean League)"],
+  ["Μακεδόνες, -ων, οἱ","Macedonians"],
+  ["Σικελία, -ας, ἡ","Sicily"],
+  ["Πόπλιος, -ου, ὁ","Publius (e.g. P. Cornelius Scipio)"]
+ ]}
+};
+// Principal parts: [present, other five parts, gloss]
+const PARTS = [
+ ["ἄγω","ἄξω, ἤγαγον, ἦχα, ἦγμαι, ἤχθην","lead"],
+ ["λαμβάνω","λήψομαι, ἔλαβον, εἴληφα, εἴλημμαι, ἐλήφθην","take"],
+ ["βάλλω","βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην","throw"],
+ ["γίγνομαι / γίνομαι","γενήσομαι, ἐγενόμην, γέγονα, γεγένημαι, ἐγενήθην","become"],
+ ["γιγνώσκω / γινώσκω","γνώσομαι, ἔγνων, ἔγνωκα, ἔγνωσμαι, ἐγνώσθην","know, recognize"],
+ ["ὁράω","ὄψομαι, εἶδον, ἑώρακα, ἑώραμαι / ὦμμαι, ὤφθην","see"],
+ ["λέγω","ἐρῶ / λέξω, εἶπον / ἔλεξα, εἴρηκα, εἴρημαι / λέλεγμαι, ἐρρήθην / ἐλέχθην","say"],
+ ["ἔρχομαι","ἐλεύσομαι (Attic εἶμι), ἦλθον, ἐλήλυθα, —, —","come, go"],
+ ["φέρω","οἴσω, ἤνεγκα / ἤνεγκον, ἐνήνοχα, ἐνήνεγμαι, ἠνέχθην","carry"],
+ ["τίθημι","θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην","put"],
+ ["ἵστημι","στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","set up; (intr.) stand"],
+ ["δίδωμι","δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην","give"],
+ ["ἵημι","ἥσω, ἧκα, εἷκα, εἷμαι, εἵθην","send, let go"],
+ ["δείκνυμι","δείξω, ἔδειξα, δέδειχα, δέδειγμαι, ἐδείχθην","show"],
+ ["πάσχω","πείσομαι, ἔπαθον, πέπονθα, —, —","suffer"],
+ ["πείθω","πείσω, ἔπεισα, πέπεικα / πέποιθα, πέπεισμαι, ἐπείσθην","persuade"],
+ ["τάττω","τάξω, ἔταξα, τέταχα, τέταγμαι, ἐτάχθην","arrange"],
+ ["πλήττω","πλήξω, ἔπληξα, πέπληγα, πέπληγμαι, ἐπλήγην (compounds -επλάγην)","strike"],
+ ["αἱρέω","αἱρήσω, εἷλον, ᾕρηκα, ᾕρημαι, ᾑρέθην","take; (mid.) choose"],
+ ["φθείρω","φθερῶ, ἔφθειρα, ἔφθαρκα, ἔφθαρμαι, ἐφθάρην","destroy"],
+ ["πίπτω","πεσοῦμαι, ἔπεσον, πέπτωκα, —, —","fall"],
+ ["ἔχω","ἕξω / σχήσω, ἔσχον, ἔσχηκα, -έσχημαι, —","have"],
+ ["βαίνω","βήσομαι, ἔβην, βέβηκα, —, —","go"],
+ ["ἀποθνῄσκω","ἀποθανοῦμαι, ἀπέθανον, τέθνηκα, —, —","die"],
+ ["ἀπόλλυμι","ἀπολῶ, ἀπώλεσα / ἀπωλόμην, ἀπολώλεκα / ἀπόλωλα, —, —","destroy; (mid.) perish"],
+ ["ἁλίσκομαι","ἁλώσομαι, ἑάλων / ἥλων, ἑάλωκα, —, —","be captured"],
+ ["αἰσθάνομαι","αἰσθήσομαι, ᾐσθόμην, —, ᾔσθημαι, —","perceive"],
+ ["τυγχάνω","τεύξομαι, ἔτυχον, τετύχηκα, —, —","happen; hit (+ gen.)"],
+ ["φαίνω","φανῶ, ἔφηνα, πέφηνα, πέφασμαι, ἐφάνην","show; (pass.) appear"],
+ ["ζεύγνυμι","ζεύξω, ἔζευξα, —, ἔζευγμαι, ἐζεύχθην / ἐζύγην","yoke"]
+];
+
+// Parsing: [form, lemma, gloss, parses ("|" separates readings), note]
+const FORMS = [
+ ["ἀναζεύξας","ἀναζεύγνυμι","break camp","aor act ptc nom sg m","Polybius’ stock way to move an army: ἀναζεύξας προῆγε."],
+ ["παραγενόμενος","παραγίνομαι","arrive","aor mid ptc nom sg m"],
+ ["διεσαφήσαμεν","διασαφέω","explain","aor act ind 1 pl","Authorial ‘we’: ὡς ἐπάνω διεσαφήσαμεν."],
+ ["προειρημένων","προλέγω (προεῖπον)","say before","pf mp ptc gen pl m/f/n","τῶν προειρημένων = of the aforementioned."],
+ ["ἐποιήσαντο","ποιέω","make, do","aor mid ind 3 pl","Middle in periphrasis: ἐποιήσαντο τὴν ἔφοδον = they attacked."],
+ ["ἐγένετο","γίνομαι","become, happen","aor mid ind 3 sg"],
+ ["ἐγενήθη","γίνομαι","become, happen","aor pass ind 3 sg","Koine passive aorist with the same meaning as ἐγένετο."],
+ ["συνέβη","συμβαίνω","happen","aor act ind 3 sg","Root aorist (ἔβην). Usually + acc. & inf."],
+ ["ὡρμημένοι","ὁρμάω","set out","pf mp ptc nom pl m"],
+ ["καταπλαγέντες","καταπλήττω","terrify","aor pass ptc nom pl m","Second aorist passive: -πλαγ- in compounds, -πληγ- in the simple verb."],
+ ["νικηθέντες","νικάω","conquer","aor pass ptc nom pl m"],
+ ["ἐπιβαλόμενος","ἐπιβάλλω","set about, undertake","aor mid ptc nom sg m"],
+ ["ἀποδείξομεν","ἀποδείκνυμι","demonstrate","fut act ind 1 pl"],
+ ["ἀποδέδεικται","ἀποδείκνυμι","demonstrate; appoint","pf mp ind 3 sg"],
+ ["ἀπεδείχθη","ἀποδείκνυμι","demonstrate; appoint","aor pass ind 3 sg","ὕπατος ἀπεδείχθη = he was declared consul."],
+ ["κατέστησαν","καθίστημι","appoint; become","aor act ind 3 pl","1st aorist (‘they appointed’) and 2nd aorist (‘they became’) share this form; context decides."],
+ ["καταστάς","καθίστημι","be established","aor act ptc nom sg m","Second aorist, intransitive."],
+ ["προθέμενος","προτίθημι","propose to oneself","aor mid ptc nom sg m"],
+ ["προτεθείσης","προτίθημι","set before","aor pass ptc gen sg f"],
+ ["διαθείς","διατίθημι","arrange","aor act ptc nom sg m"],
+ ["ἐπιστῆσαι","ἐφίστημι","pay attention; set over","aor act inf","The optative is ἐπιστήσαι: only the accent tells them apart."],
+ ["ὑπάρχουσαν","ὑπάρχω","be, exist","pres act ptc acc sg f"],
+ ["ὑπαρχόντων","ὑπάρχω","be, exist","pres act ptc gen pl m/n|pres act imp 3 pl","Context almost always makes it the participle: τῶν ὑπαρχόντων = of the resources."],
+ ["παραλαβόντες","παραλαμβάνω","take over","aor act ptc nom pl m"],
+ ["κατελάβοντο","καταλαμβάνω","seize","aor mid ind 3 pl"],
+ ["εἰληφότες","λαμβάνω","take","pf act ptc nom pl m"],
+ ["γνούς","γινώσκω","learn, recognize","aor act ptc nom sg m","Root aorist ἔγνων."],
+ ["ἀφικόμενοι","ἀφικνέομαι","arrive","aor mid ptc nom pl m"],
+ ["διαφθαρέντες","διαφθείρω","destroy","aor pass ptc nom pl m"],
+ ["δόξαν","δοκέω","seem good","aor act ptc nom/acc sg n","Accusative absolute: δόξαν ταῦτα = this having been resolved. Also the noun δόξα (acc. sg.)."],
+ ["ἐξόν","ἔξεστι","be possible","pres act ptc nom/acc sg n","Accusative absolute: ‘it being possible’."],
+ ["εἰδότες","οἶδα","know","pf act ptc nom pl m"],
+ ["ᾔδει","οἶδα","know","plpf act ind 3 sg","The pluperfect of οἶδα is the past ‘knew’."],
+ ["ποιησόμενος","ποιέω","make, do","fut mid ptc nom sg m","The future participle often expresses purpose."],
+ ["ὄντος","εἰμί","be","pres act ptc gen sg m/n"],
+ ["ἦσαν","εἰμί","be","impf act ind 3 pl"],
+ ["ἐχρήσαντο","χράομαι","use","aor mid ind 3 pl"],
+ ["χρώμενοι","χράομαι","use","pres mp ptc nom pl m","χράομαι contracts to η: χρῆται, χρῆσθαι."],
+ ["ἐπολιόρκει","πολιορκέω","besiege","impf act ind 3 sg"],
+ ["ἐνίκων","νικάω","conquer","impf act ind 1 sg|impf act ind 3 pl"],
+ ["τιμῶσι","τιμάω","honor","pres act ind 3 pl|pres act ptc dat pl m/n"],
+ ["δηλοῦν","δηλόω","show","pres act inf|pres act ptc nom/acc sg n"],
+ ["ἔφη","φημί","say","impf act ind 3 sg","Used like an aorist in narrative."],
+ ["ἀφέντες","ἀφίημι","let go, release","aor act ptc nom pl m"],
+ ["ἀφεθείς","ἀφίημι","let go, release","aor pass ptc nom sg m"],
+ ["συνιδών","συνοράω","perceive","aor act ptc nom sg m","A Polybian favorite for a commander grasping the situation."],
+ ["ἑωράκαμεν","ὁράω","see","pf act ind 1 pl"],
+ ["ὀφθήσεται","ὁράω","see","fut pass ind 3 sg"],
+ ["σχών","ἔχω","have, get","aor act ptc nom sg m","The aorist of ἔχω often means ‘got, acquired’."],
+ ["ἀποθανεῖν","ἀποθνῄσκω","die","aor act inf"],
+ ["πεπεισμένοι","πείθω","persuade","pf mp ptc nom pl m","‘Convinced’."],
+ ["ἐπείσθησαν","πείθω","persuade; (pass.) obey","aor pass ind 3 pl"],
+ ["ἐβουλήθη","βούλομαι","wish","aor pass ind 3 sg","Passive-deponent aorist."],
+ ["ἐδύνατο","δύναμαι","be able","impf mp ind 3 sg"],
+ ["γένοιτο","γίνομαι","become","aor mid opt 3 sg"],
+ ["ποιήσαιτο","ποιέω","make, do","aor mid opt 3 sg"],
+ ["ἔλθωσι","ἔρχομαι","come, go","aor act subj 3 pl"],
+ ["παραγένωνται","παραγίνομαι","arrive","aor mid subj 3 pl"],
+ ["γνῶναι","γινώσκω","learn","aor act inf"],
+ ["παρέδωκαν","παραδίδωμι","hand over","aor act ind 3 pl"],
+ ["παραδόντες","παραδίδωμι","hand over","aor act ptc nom pl m"],
+ ["ἐνεχείρισε","ἐγχειρίζω","entrust","aor act ind 3 sg"],
+ ["ἐπέθεντο","ἐπιτίθημι","(mid.) attack","aor mid ind 3 pl"],
+ ["ἐπιθέσθαι","ἐπιτίθημι","(mid.) attack","aor mid inf"],
+ ["ἁλόντες","ἁλίσκομαι","be captured","aor act ptc nom pl m","Active in form, passive in meaning (aor. ἑάλων)."],
+ ["ἀπώλοντο","ἀπόλλυμι","(mid.) perish","aor mid ind 3 pl"],
+ ["ᾔσθοντο","αἰσθάνομαι","perceive","aor mid ind 3 pl"],
+ ["προσιόντας","πρόσειμι (εἶμι)","approach","pres act ptc acc pl m","From εἶμι ‘go’, not εἰμί ‘be’."],
+ ["ἐροῦντας","λέγω (ἐρῶ)","say","fut act ptc acc pl m"],
+ ["ἐτάχθησαν","τάττω","draw up, post","aor pass ind 3 pl"],
+ ["τεταγμένοι","τάττω","draw up, post","pf mp ptc nom pl m"],
+ ["πόλεως","πόλις","city","gen sg"],
+ ["πόλεις","πόλις","city","nom pl|acc pl"],
+ ["ἱππεῖς","ἱππεύς","horseman","nom pl|acc pl","Attic acc. pl. is ἱππέας; Polybius also uses ἱππεῖς as accusative."],
+ ["βασιλέως","βασιλεύς","king","gen sg"],
+ ["τείχους","τεῖχος","wall","gen sg"],
+ ["ἔθνη","ἔθνος","people","nom pl|acc pl"],
+ ["νεῶν","ναῦς","ship","gen pl"],
+ ["ναυσί","ναῦς","ship","dat pl"],
+ ["κέρως","κέρας","wing (of an army)","gen sg","Also κέρατος."],
+ ["πράγμασι","πρᾶγμα","affair","dat pl"],
+ ["ἀνδρῶν","ἀνήρ","man","gen pl"],
+ ["χεῖρας","χείρ","hand","acc pl"],
+ ["ὄρη","ὄρος","mountain","nom pl|acc pl"],
+ ["Ἄλπεων","Ἄλπεις","the Alps","gen pl"],
+ ["διαβάσεως","διάβασις","crossing","gen sg"],
+ ["ἐλάττους","ἐλάττων","smaller, fewer","nom pl m/f|acc pl m/f","Contracted from ἐλάττονες / ἐλάττονας."],
+ ["μείζω","μείζων","greater","acc sg m/f|nom pl n|acc pl n","Contracted from μείζονα."],
+ ["πλείους","πλείων","more","nom pl m/f|acc pl m/f"],
+ ["ἀληθοῦς","ἀληθής","true","gen sg m/f/n"],
+ ["σαφῆ","σαφής","clear","acc sg m/f|nom pl n|acc pl n"],
+ ["ἀξιολόγου","ἀξιόλογος","noteworthy","gen sg m/f/n"],
+ ["ἅπαντα","ἅπας","all","acc sg m|nom pl n|acc pl n"]
+];
+
+const CONS = ["Genitive absolute","Accusative absolute","Articular infinitive","Accusative + infinitive (indirect statement)","Supplementary participle (indirect statement)","Circumstantial participle","Substantive participle","Future participle of purpose","Purpose clause (ἵνα / ὅπως)","Result clause (ὥστε + infinitive)","Potential optative","Contrary-to-fact condition","Future more vivid condition","Indefinite relative clause (ἄν + subjunctive)","Temporal clause (ἕως / μέχρι)","πρίν (ἤ) + infinitive","Verbal adjective in -τέος","ὡς + superlative","Genitive of comparison","Partitive genitive","Periphrasis with ποιέομαι","Impersonal verb + infinitive"];
+
+// Syntax: {g: Greek with ⟦highlight⟧, a: answer, e: English, s: source, n: note}
+const SYN = [
+ {g:"ἐναργεστάτην δὲ καὶ μόνην διδάσκαλον ⟦τοῦ δύνασθαι τὰς τῆς τύχης μεταβολὰς γενναίως ὑποφέρειν⟧ τὴν τῶν ἀλλοτρίων περιπετειῶν ὑπόμνησιν.", a:"Articular infinitive", e:"…and that the clearest and only teacher of how to bear the changes of Fortune nobly is the recollection of other people’s reversals.", s:"Plb. 1.1.2", n:"Genitive articular infinitive depending on διδάσκαλον: ‘teacher of being able to bear…’. The whole clause is indirect statement after φάσκοντες, with εἶναι understood."},
+ {g:"τίς γὰρ οὕτως ὑπάρχει φαῦλος ἢ ῥᾴθυμος ἀνθρώπων ⟦ὃς οὐκ ἂν βούλοιτο γνῶναι⟧ πῶς καὶ τίνι γένει πολιτείας ἐπικρατηθέντα σχεδὸν ἅπαντα τὰ κατὰ τὴν οἰκουμένην οὐχ ὅλοις πεντήκοντα καὶ τρισὶν ἔτεσιν ὑπὸ μίαν ἀρχὴν ἔπεσε τὴν Ῥωμαίων;", a:"Potential optative", e:"For who is so worthless or idle as not to want to know how, and by what kind of constitution, almost the whole inhabited world was conquered and fell under the single rule of the Romans in not quite fifty-three years?", s:"Plb. 1.1.5", n:"ἄν + optative = ‘would (not) wish’. ὑπάρχει here simply means ‘is’."},
+ {g:"πῶς καὶ τίνι γένει πολιτείας ⟦ἐπικρατηθέντα⟧ σχεδὸν ἅπαντα τὰ κατὰ τὴν οἰκουμένην … ὑπὸ μίαν ἀρχὴν ἔπεσε τὴν Ῥωμαίων", a:"Circumstantial participle", e:"…how, and by what kind of constitution, almost everything in the inhabited world was conquered and fell under the single rule of the Romans.", s:"Plb. 1.1.5", n:"Aorist passive participle, neuter plural, agreeing with ἅπαντα (subject of singular ἔπεσε, since neuter plurals take singular verbs). Note the hiatus-driven word order: ἀρχὴν … τὴν Ῥωμαίων."},
+ {g:"ἀπὸ δὲ τούτων τῶν καιρῶν οἷον εἰ σωματοειδῆ ⟦συμβαίνει γίνεσθαι τὴν ἱστορίαν⟧.", a:"Impersonal verb + infinitive", e:"But from this time onward, history has come to be, as it were, an organic whole.", s:"Plb. 1.3.4", n:"συμβαίνει + accusative and infinitive: ‘it happens that history becomes…’. οἷον εἰ softens the metaphor: ‘as if, so to speak’."},
+ {g:"οὕτως καὶ διὰ τῆς ἱστορίας ὑπὸ μίαν σύνοψιν ἀγαγεῖν ⟦τοῖς ἐντυγχάνουσι⟧ τὸν χειρισμὸν τῆς τύχης.", a:"Substantive participle", e:"…so too through history to bring under a single view, for the readers, the way Fortune has managed things.", s:"Plb. 1.4.1", n:"οἱ ἐντυγχάνοντες = ‘those who meet with (the work)’, i.e. readers. Dative of advantage."},
+ {g:"λέγω δ’ ἐπινοίας καὶ διαθέσεις καὶ τοὺς περὶ ταῦτα συλλογισμοὺς καὶ δι’ ὧν ⟦ἐπὶ τὸ κρῖναί τι καὶ προθέσθαι⟧ παραγινόμεθα.", a:"Articular infinitive", e:"I mean the ideas and dispositions and the reasoning about them, through which we arrive at deciding on and proposing something.", s:"Plb. 3.6.7", n:"ἐπὶ τό + infinitive: ‘to the (point of) deciding’. Part of Polybius’ distinction between αἰτία, πρόφασις and ἀρχή."},
+ {g:"⟦τῶν δὲ Ῥωμαίων πυθομένων τὴν ἧτταν⟧, ἡ σύγκλητος εὐθέως πρεσβευτὰς ἐξέπεμψεν.", a:"Genitive absolute", e:"When the Romans learned of the defeat, the senate immediately sent out ambassadors.", s:"Polybian style", n:"Noun + participle in the genitive, grammatically independent of the main clause."},
+ {g:"⟦διὰ τὸ μὴ γινώσκειν τοὺς τόπους⟧ πολλὰ καὶ δεινὰ συνέβη παθεῖν τοὺς Καρχηδονίους.", a:"Articular infinitive", e:"Because they did not know the terrain, the Carthaginians came to suffer many terrible things.", s:"Polybian style", n:"διὰ τό + infinitive = ‘because’. The negative is μή, as always with the infinitive."},
+ {g:"εἰς τοσοῦτον δ’ ἦλθον ἀλογιστίας ⟦ὥστε μηδὲ τῶν ἰδίων φείδεσθαι⟧.", a:"Result clause (ὥστε + infinitive)", e:"They came to such a pitch of folly that they did not spare even their own people.", s:"Polybian style", n:"εἰς τοσοῦτον + partitive genitive sets up the ὥστε clause. φείδομαι takes the genitive."},
+ {g:"ὁ δ’ Ἀννίβας ⟦ἐποιεῖτο τὴν πορείαν⟧ παρὰ τὸν ποταμὸν ὡς ἐπὶ τὰς Ἄλπεις.", a:"Periphrasis with ποιέομαι", e:"Hannibal marched along the river in the direction of the Alps.", s:"Polybian style", n:"ἐποιεῖτο τὴν πορείαν = ἐπορεύετο. ὡς ἐπί + accusative = ‘toward’."},
+ {g:"ἐξέπεμψαν πρεσβευτὰς ⟦ποιησομένους συμμαχίαν⟧.", a:"Future participle of purpose", e:"They sent out ambassadors to make an alliance.", s:"Polybian style", n:"The future participle after a verb of motion or sending expresses purpose."},
+ {g:"οἱ δὲ πρέσβεις ἔφασαν ⟦τοὺς Ῥωμαίους ἀδικεῖν⟧.", a:"Accusative + infinitive (indirect statement)", e:"The envoys said that the Romans were in the wrong.", s:"Polybian style", n:"φημί takes accusative + infinitive. The present infinitive represents a present indicative."},
+ {g:"ᾔσθοντο ⟦τοὺς πολεμίους προσιόντας⟧.", a:"Supplementary participle (indirect statement)", e:"They perceived that the enemy were approaching.", s:"Polybian style", n:"Verbs of perceiving take accusative + participle. προσιόντας is from πρόσειμι (εἶμι, ‘go’)."},
+ {g:"⟦εἰ μὴ ταχέως ἐβοήθησαν οἱ σύμμαχοι, ἀπώλοντο ἂν ἅπαντες⟧.", a:"Contrary-to-fact condition", e:"If the allies had not helped quickly, they would all have perished.", s:"Polybian style", n:"εἰ + aorist indicative, aorist indicative + ἄν: past contrary-to-fact."},
+ {g:"⟦ἐὰν δέ τις ἐπιστήσῃ⟧, εὑρήσει τὴν αἰτίαν ἐν τῇ πολιτείᾳ κειμένην.", a:"Future more vivid condition", e:"If anyone pays attention, he will find the cause lying in the constitution.", s:"Polybian style", n:"ἐάν + subjunctive, future indicative. ἐπιστῆναι / ἐπιστῆσαι = ‘pay attention’ is a Polybian favorite."},
+ {g:"⟦ὅσοι δ’ ἂν ἁλῶσι τῶν πολεμίων⟧, πωλοῦνται.", a:"Indefinite relative clause (ἄν + subjunctive)", e:"Whoever of the enemy are captured are sold.", s:"Polybian style", n:"Relative + ἄν + subjunctive with a present main verb: a general statement. ἁλῶσι is aorist subjunctive of ἁλίσκομαι."},
+ {g:"ἔμενον δὲ ⟦ἕως παραγένοιτο ὁ στρατηγός⟧.", a:"Temporal clause (ἕως / μέχρι)", e:"They waited until the general should arrive.", s:"Polybian style", n:"ἕως + optative after a past verb: the arrival is anticipated, not yet a fact."},
+ {g:"⟦πρὶν ἢ συμμῖξαι τοῖς πολεμίοις⟧, παρέταξε τὴν δύναμιν.", a:"πρίν (ἤ) + infinitive", e:"Before engaging the enemy, he drew up his force.", s:"Polybian style", n:"Polybius often writes πρὶν ἤ. After an affirmative main clause πρίν takes the infinitive."},
+ {g:"ἐσπούδαζε ⟦ὡς τάχιστα⟧ συνάψαι τοῖς πολεμίοις.", a:"ὡς + superlative", e:"He was eager to engage the enemy as quickly as possible.", s:"Polybian style", n:"ὡς + superlative = ‘as … as possible’. συνάπτω + dative = ‘close with’."},
+ {g:"⟦ἐξὸν αὐτοῖς διαφυγεῖν⟧, εἵλοντο κινδυνεύειν.", a:"Accusative absolute", e:"Although they could have escaped, they chose to fight.", s:"Polybian style", n:"Impersonal verbs (ἔξεστι, δοκεῖ, δέον) form absolutes in the neuter accusative participle."},
+ {g:"⟦ῥητέον⟧ δὲ πρῶτον περὶ τῆς Ῥωμαίων πολιτείας.", a:"Verbal adjective in -τέος", e:"First we must speak about the Roman constitution.", s:"Polybian style", n:"Impersonal neuter verbal adjective (from εἴρω / ἐρῶ) + ἐστί understood: ‘it must be said’."},
+ {g:"⟦μέλλοντος δ’ αὐτοῦ διαβαίνειν τὸν ποταμόν⟧, παρῆσαν οἱ πρέσβεις.", a:"Genitive absolute", e:"As he was about to cross the river, the envoys arrived.", s:"Polybian style", n:"μέλλω + present infinitive inside a genitive absolute."},
+ {g:"⟦ἐν δὲ τῷ προάγειν αὐτοὺς⟧ οἱ Κελτοὶ ἐξ ἐνέδρας ἐπέθεντο.", a:"Articular infinitive", e:"While they were advancing, the Celts attacked from ambush.", s:"Polybian style", n:"ἐν τῷ + infinitive = ‘while’. The accusative αὐτούς is the infinitive’s subject."},
+ {g:"ἔδοξε τῇ συγκλήτῳ ⟦πέμπειν βοήθειαν⟧.", a:"Impersonal verb + infinitive", e:"The senate resolved to send help.", s:"Polybian style", n:"ἔδοξε + dative + infinitive: the formula for official decisions."},
+ {g:"ἐγένετο τὸ κακὸν ⟦μεῖζον τῆς προσδοκίας⟧.", a:"Genitive of comparison", e:"The disaster turned out greater than expected.", s:"Polybian style", n:"The genitive replaces ἤ + nominative after a comparative."},
+ {g:"⟦τῶν προειρημένων⟧ τινὲς ἀπέστησαν.", a:"Partitive genitive", e:"Some of the aforementioned revolted.", s:"Polybian style", n:"Genitive of the whole with τινές. ἀπέστησαν is the intransitive second aorist of ἀφίστημι."},
+ {g:"ταφρεύουσι τὴν παρεμβολήν, ⟦ἵνα μὴ αἰφνιδίως ἐπιθῶνται οἱ πολέμιοι⟧.", a:"Purpose clause (ἵνα / ὅπως)", e:"They dig a trench around the camp so that the enemy may not attack suddenly.", s:"Polybian style", n:"ἵνα + subjunctive. Polybius often keeps the subjunctive even after past verbs, where Attic would prefer the optative."},
+ {g:"⟦καίπερ ἐλάττους ὄντες⟧, ἐνίκησαν τοὺς πολεμίους.", a:"Circumstantial participle", e:"Although they were fewer, they defeated the enemy.", s:"Polybian style", n:"καίπερ marks a concessive participle. ἐλάττους = ἐλάττονες."},
+ {g:"⟦ἅμα δὲ τῷ παραγενέσθαι⟧ συνεκάλεσε τοὺς στρατιώτας.", a:"Articular infinitive", e:"As soon as he arrived, he called the soldiers together.", s:"Polybian style", n:"ἅμα τῷ + infinitive = ‘at the same time as’, ‘as soon as’."},
+ {g:"οὐκ ἔστιν ⟦ὅστις οὐκ ἂν θαυμάσειε⟧ τὴν τῶν Ῥωμαίων πολιτείαν.", a:"Potential optative", e:"There is no one who would not admire the constitution of the Romans.", s:"Polybian style", n:"θαυμάσειε is the common aorist optative 3rd singular in -ειε."}
+];
+
+// Composition: [tier, English, model(s) separated by " || ", hint]
+const COMP = [
+ ["t1","The Romans sent ambassadors to Carthage.","οἱ Ῥωμαῖοι πρεσβευτὰς εἰς Καρχηδόνα ἐξέπεμψαν.","ἐκπέμπω, aorist. Καρχηδών, -όνος."],
+ ["t1","Hannibal broke camp and advanced toward the river.","ὁ δ’ Ἀννίβας ἀναζεύξας προῆγε πρὸς τὸν ποταμόν.","Use an aorist participle of ἀναζεύγνυμι and the imperfect of προάγω."],
+ ["t1","The general was declared consul.","ὁ στρατηγὸς ὕπατος ἀπεδείχθη. || ὁ στρατηγὸς ὕπατος κατεστάθη.","ἀποδείκνυμι or καθίστημι, aorist passive; ὕπατος is a predicate nominative."],
+ ["t1","Having arrived at the camp, they reported the defeat.","παραγενόμενοι δ’ εἰς τὴν παρεμβολὴν ἀπήγγειλαν τὴν ἧτταν.","παραγίνομαι (aor. ptc.); ἀπαγγέλλω (aor. ἀπήγγειλα)."],
+ ["t1","The cavalry were terrified and fled.","οἱ δ’ ἱππεῖς καταπλαγέντες ἔφυγον.","Make ‘were terrified’ an aorist passive participle."],
+ ["t1","Fortune often changes human affairs.","ἡ τύχη πολλάκις μεταβάλλει τὰ ἀνθρώπινα πράγματα.","μεταβάλλω; ἀνθρώπινος, -η, -ον."],
+ ["t1","We will explain the causes of the war.","τὰς τοῦ πολέμου αἰτίας διασαφήσομεν.","διασαφέω, future. Put the genitive in attributive position."],
+ ["t1","The enemy were besieging the city.","οἱ πολέμιοι ἐπολιόρκουν τὴν πόλιν.","πολιορκέω, imperfect 3rd plural (contract)."],
+ ["t2","When the Romans heard this, the senate at once sent out ambassadors.","τῶν δὲ Ῥωμαίων ἀκουσάντων ταῦτα, ἡ σύγκλητος εὐθέως ἐξέπεμψε πρεσβευτάς.","Genitive absolute with an aorist participle."],
+ ["t2","Because they did not know the terrain, they suffered many terrible things.","διὰ τὸ μὴ γινώσκειν τοὺς τόπους πολλὰ καὶ δεινὰ ἔπαθον.","διὰ τό + infinitive, negated with μή. ‘Many terrible things’ = πολλὰ καὶ δεινά."],
+ ["t2","Hannibal marched along the river.","ὁ δ’ Ἀννίβας ἐποιεῖτο τὴν πορείαν παρὰ τὸν ποταμόν.","Do not use πορεύομαι: use ποιέομαι + πορεία."],
+ ["t2","It happened that the consul was absent.","συνέβη τὸν ὕπατον ἀπεῖναι.","συμβαίνω + accusative and infinitive (ἄπειμι, ‘be away’)."],
+ ["t2","They were so terrified that they did not even defend themselves.","οὕτως κατεπλάγησαν ὥστε μηδ’ ἀμύνεσθαι.","ὥστε + infinitive, negative μηδέ. ἀμύνομαι = defend oneself."],
+ ["t2","They sent ambassadors to make an alliance.","ἐξέπεμψαν πρεσβευτὰς ποιησομένους συμμαχίαν. || ἐξέπεμψαν πρεσβευτάς, ἵνα ποιήσωνται συμμαχίαν.","Future participle of purpose (middle of ποιέω)."],
+ ["t2","The senate resolved to send help.","ἔδοξε τῇ συγκλήτῳ πέμπειν βοήθειαν.","ἔδοξε + dative + infinitive."],
+ ["t2","Although they were fewer, they defeated the enemy.","καίπερ ἐλάττους ὄντες ἐνίκησαν τοὺς πολεμίους.","καίπερ + participle; contracted comparative ἐλάττους."],
+ ["t2","As we showed above, the Carthaginians controlled Sicily.","καθάπερ ἐπάνω προεδηλώσαμεν, οἱ Καρχηδόνιοι τῆς Σικελίας ἐκράτουν.","προδηλόω, aorist 1st plural; κρατέω + genitive."],
+ ["t2","Before engaging the enemy, he drew up his army.","πρὶν ἢ συμμῖξαι τοῖς πολεμίοις, παρέταξε τὴν δύναμιν.","πρὶν ἤ + aorist infinitive; παρατάττω, aorist."],
+ ["t2","He said that the Romans were in the wrong.","ἔφη τοὺς Ῥωμαίους ἀδικεῖν.","φημί + accusative and infinitive."],
+ ["t2","They perceived that the enemy were approaching.","ᾔσθοντο τοὺς πολεμίους προσιόντας.","αἰσθάνομαι + accusative and participle (πρόσειμι from εἶμι)."],
+ ["t2","If they had not helped quickly, they would have perished.","εἰ μὴ ταχέως ἐβοήθησαν, ἀπώλοντο ἄν.","Past contrary-to-fact: aorist indicative in both clauses, ἄν in the apodosis."],
+ ["t3","Who would not wish to know how the Romans conquered almost the whole inhabited world?","τίς γὰρ οὐκ ἂν βούλοιτο γνῶναι πῶς οἱ Ῥωμαῖοι σχεδὸν ἁπάσης τῆς οἰκουμένης ἐπεκράτησαν;","Potential optative; ἐπικρατέω + genitive. Then compare Plb. 1.1.5."],
+ ["t3","The study of history is the truest training for political action.","ἡ ἐκ τῆς ἱστορίας μάθησις ἀληθινωτάτη παιδεία πρὸς τὰς πολιτικὰς πράξεις ἐστίν.","μάθησις; ἀληθινός, superlative. Compare Plb. 1.1.2."],
+ ["t3","Hannibal, wishing to cross the Alps before winter, marched in haste.","ὁ δ’ Ἀννίβας, βουλόμενος πρὸ τοῦ χειμῶνος ποιήσασθαι τὴν τῶν Ἄλπεων ὑπερβολήν, κατὰ σπουδὴν ἐποιεῖτο τὴν πορείαν.","Two periphrases with ποιέομαι; κατὰ σπουδήν = in haste."],
+ ["t3","At the same time Philip, king of the Macedonians, was besieging the city.","κατὰ δὲ τὸν αὐτὸν καιρὸν Φίλιππος ὁ τῶν Μακεδόνων βασιλεὺς ἐπολιόρκει τὴν πόλιν.","Open with the stock transition."],
+ ["t3","It is necessary to explain the causes, for without them history becomes useless.","ἀναγκαῖον δὲ διασαφῆσαι τὰς αἰτίας· χωρὶς γὰρ τούτων ἀνωφελὴς γίνεται ἡ ἱστορία.","ἀνωφελής, -ές = useless. Koine γίνεται."],
+ ["t3","While they were advancing, the Celts attacked from ambush.","ἐν δὲ τῷ προάγειν αὐτοὺς οἱ Κελτοὶ ἐξ ἐνέδρας ἐπέθεντο.","ἐν τῷ + infinitive; ἐπιτίθεμαι, aorist middle."],
+ ["t3","We must speak about the constitution of the Romans.","ῥητέον δὲ περὶ τῆς Ῥωμαίων πολιτείας.","Verbal adjective in -τέον."],
+ ["t3","As soon as he arrived, he called the soldiers together.","ἅμα δὲ τῷ παραγενέσθαι συνεκάλεσε τοὺς στρατιώτας.","ἅμα τῷ + aorist infinitive; συγκαλέω."],
+ ["t3","Although it was possible to escape, they chose to fight.","ἐξὸν αὐτοῖς διαφυγεῖν, εἵλοντο κινδυνεύειν.","Accusative absolute with ἐξόν; αἱρέομαι, aorist middle."]
+];
+
+// Colometry passages
+const COLO = [
+ {ref:"Plb. 1.1.2", text:"οὐ γὰρ μόνον τινὲς οὐδ’ ἐπὶ ποσόν, ἀλλὰ πάντες ὡς ἔπος εἰπεῖν ἀρχῇ καὶ τέλει κέχρηνται τούτῳ, φάσκοντες ἀληθινωτάτην μὲν εἶναι παιδείαν καὶ γυμνασίαν πρὸς τὰς πολιτικὰς πράξεις τὴν ἐκ τῆς ἱστορίας μάθησιν, ἐναργεστάτην δὲ καὶ μόνην διδάσκαλον τοῦ δύνασθαι τὰς τῆς τύχης μεταβολὰς γενναίως ὑποφέρειν τὴν τῶν ἀλλοτρίων περιπετειῶν ὑπόμνησιν.",
+  lines:["οὐ γὰρ μόνον τινὲς οὐδ’ ἐπὶ ποσόν,","ἀλλὰ πάντες ὡς ἔπος εἰπεῖν","    ἀρχῇ καὶ τέλει κέχρηνται τούτῳ,","        φάσκοντες","            ἀληθινωτάτην μὲν εἶναι παιδείαν καὶ γυμνασίαν πρὸς τὰς πολιτικὰς πράξεις","                τὴν ἐκ τῆς ἱστορίας μάθησιν,","            ἐναργεστάτην δὲ καὶ μόνην διδάσκαλον","                    τοῦ δύνασθαι τὰς τῆς τύχης μεταβολὰς γενναίως ὑποφέρειν","                τὴν τῶν ἀλλοτρίων περιπετειῶν ὑπόμνησιν."],
+  en:"For not merely some, nor to a limited degree, but practically all have used this as their beginning and end, declaring that the truest education and training for political action is learning from history, and that the clearest and only teacher of how to bear the reversals of Fortune nobly is the recollection of other people’s calamities."},
+ {ref:"Plb. 1.1.5", text:"τίς γὰρ οὕτως ὑπάρχει φαῦλος ἢ ῥᾴθυμος ἀνθρώπων ὃς οὐκ ἂν βούλοιτο γνῶναι πῶς καὶ τίνι γένει πολιτείας ἐπικρατηθέντα σχεδὸν ἅπαντα τὰ κατὰ τὴν οἰκουμένην οὐχ ὅλοις πεντήκοντα καὶ τρισὶν ἔτεσιν ὑπὸ μίαν ἀρχὴν ἔπεσε τὴν Ῥωμαίων, ὃ πρότερον οὐχ εὑρίσκεται γεγονός;",
+  lines:["τίς γὰρ οὕτως ὑπάρχει φαῦλος ἢ ῥᾴθυμος ἀνθρώπων","    ὃς οὐκ ἂν βούλοιτο γνῶναι","        πῶς καὶ τίνι γένει πολιτείας","            ἐπικρατηθέντα σχεδὸν ἅπαντα τὰ κατὰ τὴν οἰκουμένην","            οὐχ ὅλοις πεντήκοντα καὶ τρισὶν ἔτεσιν","        ὑπὸ μίαν ἀρχὴν ἔπεσε τὴν Ῥωμαίων,","            ὃ πρότερον οὐχ εὑρίσκεται γεγονός;"],
+  en:"For who is so worthless or idle as not to want to know how, and by what kind of constitution, almost the whole inhabited world was conquered and fell under the single rule of the Romans in not quite fifty-three years, a thing never known to have happened before?"},
+ {ref:"Plb. 3.6.7", text:"ἐγὼ δέ φημι πάντων ἀρχὰς μὲν εἶναι τὰς πρώτας ἐπιβολὰς καὶ πράξεις τῶν ἤδη κεκριμένων, αἰτίας δὲ τὰς προκαθηγουμένας τῶν κρίσεων καὶ διαλήψεων· λέγω δ’ ἐπινοίας καὶ διαθέσεις καὶ τοὺς περὶ ταῦτα συλλογισμοὺς καὶ δι’ ὧν ἐπὶ τὸ κρῖναί τι καὶ προθέσθαι παραγινόμεθα.",
+  lines:["ἐγὼ δέ φημι","    πάντων ἀρχὰς μὲν εἶναι","        τὰς πρώτας ἐπιβολὰς καὶ πράξεις τῶν ἤδη κεκριμένων,","    αἰτίας δὲ","        τὰς προκαθηγουμένας τῶν κρίσεων καὶ διαλήψεων·","λέγω δ’ ἐπινοίας καὶ διαθέσεις","    καὶ τοὺς περὶ ταῦτα συλλογισμοὺς","    καὶ δι’ ὧν","        ἐπὶ τὸ κρῖναί τι καὶ προθέσθαι","    παραγινόμεθα."],
+  en:"But I say that the beginnings of everything are the first attempts and actions of things already decided, while the causes are what lead the way to the decisions and judgments: I mean ideas and dispositions and the reasoning about them, and the things through which we arrive at deciding on and proposing something."}
+];
+
+const SYNOPSIS_VERBS = ["λύω","ποιέω","τίθημι","ἵστημι","δίδωμι","δείκνυμι","λαμβάνω","τάττω","πείθω","βάλλω"];
+const NOUNS_DECL = ["πόλις, -εως, ἡ","βασιλεύς, -έως, ὁ","ἔθνος, -ους, τό","πρᾶγμα, -ατος, τό","ναῦς, νεώς, ἡ","ἀνήρ, ἀνδρός, ὁ","διάβασις, -εως, ἡ","τεῖχος, -ους, τό","ἱππεύς, -έως, ὁ","ἀληθής, -ές","μείζων, -ον","πᾶς, πᾶσα, πᾶν"];
+
+const MILESTONES = [
+ "Principal parts deck: all 30 verbs at ‘Good’ at least once",
+ "Synopsis of τίθημι from memory with ≤3 errors",
+ "Parsing drill: 18 of 20 correct in one sitting",
+ "Finished Xenophon, Anabasis 1 (or equivalent bridge reading)",
+ "Read Plb. 1.20–1.23 (the fleet and the κόραξ)",
+ "Read Plb. 3.47–3.56 (crossing the Alps)",
+ "Read Plb. 1.1–1.5 (the preface) and wrote a colometry of 1.1.5",
+ "Fresh 10 lines of Book 3 in 30 minutes with a lexicon",
+ "Read Plb. 3.107–3.117 (Cannae)",
+ "Read Plb. 6.11–6.18 (the Roman constitution)",
+ "One Loeb page in 40 minutes",
+ "First 150-word composition in Polybian style",
+ "Read a whole book of Polybius straight through"
+];
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const today = () => { const d = new Date(); return Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000); };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const strip = s => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/ς/g, "σ").replace(/[^\p{L}\s]/gu, " ").split(/\s+/).filter(Boolean);
+const hl = g => esc(g).replace(/⟦/g, "<mark>").replace(/⟧/g, "</mark>");
+
+/* ---------- Beta Code ---------- */
+const BL = {a:"α",b:"β",g:"γ",d:"δ",e:"ε",z:"ζ",h:"η",q:"θ",i:"ι",k:"κ",l:"λ",m:"μ",n:"ν",c:"ξ",o:"ο",p:"π",r:"ρ",s:"σ",t:"τ",u:"υ",f:"φ",x:"χ",y:"ψ",w:"ω"};
+const BD = {")":"\u0313","(":"\u0314","/":"\u0301","\\":"\u0300","=":"\u0342","|":"\u0345","+":"\u0308"};
+const MARK_ORDER = ["\u0308","\u0313","\u0314","\u0301","\u0300","\u0342","\u0345"];
+const isGreekLetter = ch => /[\u0370-\u03FF\u1F00-\u1FFF]/.test(ch) && /\p{L}/u.test(ch);
+function betaConvert(src) {
+  const out = []; let cap = false, pending = [];
+  for (const ch of src) {
+    const low = ch.toLowerCase();
+    if (ch === "*") { cap = true; pending = []; continue; }
+    if (BD[ch]) {
+      if (cap) { pending.push(BD[ch]); continue; }
+      const last = out[out.length - 1];
+      if (last && last.letter) { last.marks.add(BD[ch]); continue; }
+      out.push({raw: ch}); continue;
+    }
+    if (BL[low] && /[a-z]/i.test(ch)) {
+      let base = BL[low]; if (cap || ch !== low) base = base.toUpperCase();
+      out.push({letter: true, base, marks: new Set(pending)}); cap = false; pending = []; continue;
+    }
+    if (isGreekLetter(ch)) {
+      const d = ch.normalize("NFD"); const base = d[0]; const marks = new Set([...d.slice(1)]);
+      out.push({letter: true, base: base === "ς" ? "σ" : base, marks}); cap = false; continue;
+    }
+    cap = false; pending = [];
+    out.push({raw: ch === ":" ? "·" : ch});
+  }
+  let s = "";
+  out.forEach((t, i) => {
+    if (!t.letter) { s += t.raw; return; }
+    let b = t.base;
+    if (b === "σ") { const nx = out[i + 1]; if (!nx || !nx.letter) b = "ς"; }
+    s += (b + MARK_ORDER.filter(m => t.marks.has(m)).join("")).normalize("NFC");
+  });
+  return s;
+}
+
+/* =========================================================
+   ROUTER
+   ========================================================= */
+const VIEWS = ["plan","vocab","parse","syntax","compose","print"];
+function route() {
+  const h = location.hash.slice(1); const v = VIEWS.includes(h) ? h : "plan";
+  VIEWS.forEach(x => { $("#v-" + x).hidden = x !== v; $("#t-" + x).setAttribute("aria-current", x === v ? "page" : "false"); });
+  if (v === "vocab") vocabStart();
+  if (v === "plan") renderToday();
+  const t = $("#t-" + v); if (t && t.scrollIntoView) t.scrollIntoView({block: "nearest", inline: "nearest"});
+}
+window.addEventListener("hashchange", () => { route(); window.scrollTo(0, 0); });
+
+/* =========================================================
+   VOCAB / SRS
+   ========================================================= */
+const SETS = Object.assign({}, VOCAB, {parts: {name: "Principal parts", items: PARTS.map(p => [p[0], p[1] + " · " + p[2]])}});
+const SET_ORDER = ["method","verbs","glue","parts","war","land","names","state","mind"];
+const CARDS = [];
+SET_ORDER.forEach(k => SETS[k].items.forEach(([g, e]) => CARDS.push({id: k + "|" + g, set: k, g, e, pp: k === "parts"})));
+const IV = [0, 1, 2, 4, 8, 16, 35, 70, 140];
+let srs = store.get("pw.srs", {cards: {}, newDay: 0, newCount: 0});
+let vs = store.get("pw.vset", {sets: ["method","verbs","glue","parts"], dir: "ge", perDay: 10});
+let queue = [], qDone = 0, qTotal = 0, cur = null, shown = false;
+const saveSrs = () => store.set("pw.srs", srs);
+const saveVs = () => store.set("pw.vset", vs);
+
+function setStats(k) {
+  const t = today(); let due = 0, fresh = 0, known = 0;
+  CARDS.forEach(c => { if (c.set !== k) return; const s = srs.cards[c.id]; if (!s) fresh++; else { if (s.due <= t) due++; if (s.b >= 3) known++; } });
+  return {due, fresh, known};
+}
+function renderSetPick() {
+  $("#setPick").innerHTML = SET_ORDER.map(k => {
+    const st = setStats(k);
+    return `<label><input type="checkbox" value="${k}" ${vs.sets.includes(k) ? "checked" : ""}> ${esc(SETS[k].name)} <span class="cnt">${st.due} due · ${st.fresh} new</span></label>`;
+  }).join("");
+}
+function buildQueue() {
+  const t = today(); const sel = new Set(vs.sets);
+  if (srs.newDay !== t) { srs.newDay = t; srs.newCount = 0; saveSrs(); }
+  const pool = CARDS.filter(c => sel.has(c.set));
+  const due = pool.filter(c => srs.cards[c.id] && srs.cards[c.id].due <= t);
+  const allow = Math.max(0, vs.perDay - srs.newCount);
+  const fresh = [];
+  // interleave new cards across chosen decks
+  const bySet = vs.sets.map(k => pool.filter(c => c.set === k && !srs.cards[c.id]));
+  for (let i = 0; fresh.length < allow && bySet.some(a => a.length); i++) { const a = bySet[i % bySet.length]; if (a.length) fresh.push(a.shift()); }
+  queue = shuffle(due).concat(fresh); qDone = 0; qTotal = queue.length;
+}
+function vocabStart() {
+  $("#dirGe").checked = vs.dir === "ge"; $("#dirEg").checked = vs.dir === "eg";
+  $("#perDay").value = String(vs.perDay);
+  renderSetPick(); buildQueue(); nextCard();
+}
+function nextCard() {
+  cur = queue.shift() || null; shown = false; renderCard();
+}
+function intervalLabel(c, g) {
+  const s = srs.cards[c.id] || {b: 0};
+  if (g === 0) return "again today"; if (g === 1) return "1 day";
+  const b = Math.min(s.b + (g === 2 ? 1 : 2), 8); const d = IV[b]; return d + (d === 1 ? " day" : " days");
+}
+function renderCard() {
+  const knownTotal = CARDS.filter(c => vs.sets.includes(c.set) && srs.cards[c.id] && srs.cards[c.id].b >= 3).length;
+  const poolTotal = CARDS.filter(c => vs.sets.includes(c.set)).length;
+  $("#vKnown").textContent = `${knownTotal} of ${poolTotal} cards learned`;
+  $("#vBar").style.width = qTotal ? (100 * qDone / qTotal) + "%" : "0";
+  const box = $("#vCard"), ctl = $("#vControls");
+  if (!cur) {
+    $("#vStatus").textContent = qTotal ? `Done: ${qDone} reviews` : "Nothing due";
+    box.innerHTML = `<div class="front en">${qTotal ? "Session complete." : "Nothing due in these decks."}</div><p class="muted">${vs.sets.length ? "Add another deck, raise the new-card limit, or come back tomorrow." : "Choose at least one deck above."}</p>`;
+    ctl.innerHTML = ""; renderSetPick(); return;
+  }
+  $("#vStatus").textContent = `${queue.length + 1} left in this session`;
+  const isNew = !srs.cards[cur.id];
+  const ge = vs.dir === "ge";
+  const front = ge ? `<div class="front">${esc(cur.g)}${cur.pp ? '<div class="small muted" style="font-family:var(--f-ui)">principal parts?</div>' : ""}</div>` : `<div class="front en">${esc(cur.e)}</div>`;
+  const back = ge ? `<div class="back">${esc(cur.e)}</div>` : `<div class="back"><span class="gk">${esc(cur.g)}</span></div>`;
+  box.innerHTML = `<span class="setname">${esc(SETS[cur.set].name)}${isNew ? " · new" : ""}</span>${front}${shown ? back : ""}`;
+  if (!shown) ctl.innerHTML = `<button class="primary" style="width:100%;padding:12px" id="vShow">Show answer</button>`;
+  else ctl.innerHTML = `<div class="grades">${["Again","Hard","Good","Easy"].map((l, i) => `<button data-g="${i}">${l}<small>${intervalLabel(cur, i)}</small></button>`).join("")}</div>`;
+}
+function grade(g) {
+  if (!cur || !shown) return;
+  const t = today(); let s = srs.cards[cur.id];
+  if (!s) { s = {b: 0, due: t}; srs.newCount++; }
+  if (g === 0) { s.b = 0; s.due = t; queue.splice(Math.min(queue.length, 3), 0, cur); qTotal++; }
+  else if (g === 1) { s.b = Math.max(1, s.b); s.due = t + 1; }
+  else { s.b = Math.min(s.b + (g === 2 ? 1 : 2), 8); s.due = t + IV[s.b]; }
+  s.n = (s.n || 0) + 1; srs.cards[cur.id] = s; saveSrs(); qDone++; nextCard();
+}
+$("#vControls").addEventListener("click", e => {
+  if (e.target.closest("#vShow")) { shown = true; renderCard(); return; }
+  const b = e.target.closest("[data-g]"); if (b) grade(+b.dataset.g);
+});
+$("#vCard").addEventListener("click", () => { if (cur && !shown) { shown = true; renderCard(); } });
+$("#setPick").addEventListener("change", () => {
+  vs.sets = [...document.querySelectorAll("#setPick input:checked")].map(i => i.value); saveVs(); buildQueue(); nextCard();
+});
+document.querySelectorAll('input[name="dir"]').forEach(r => r.addEventListener("change", e => { vs.dir = e.target.value; saveVs(); renderCard(); }));
+$("#perDay").addEventListener("change", e => { vs.perDay = +e.target.value; saveVs(); buildQueue(); nextCard(); });
+document.addEventListener("keydown", e => {
+  if ($("#v-vocab").hidden || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+  if (e.key === " " && cur && !shown) { e.preventDefault(); shown = true; renderCard(); }
+  else if (shown && "1234".includes(e.key) && e.key) grade(+e.key - 1);
+});
+
+/* =========================================================
+   PARSING
+   ========================================================= */
+const CAT = {tense:["pres","impf","fut","aor","pf","plpf"], voice:["act","mid","pass","mp"], mood:["ind","subj","opt","imp","inf","ptc"], person:["1","2","3"], number:["sg","pl"], case:["nom","gen","dat","acc"], gender:["m","f","n"]};
+const CHIP = {pres:"pres",impf:"impf",fut:"fut",aor:"aor",pf:"perf",plpf:"plupf",act:"act",mid:"mid",pass:"pass",mp:"mid/pass",ind:"ind",subj:"subj",opt:"opt",imp:"impv",inf:"inf",ptc:"ptc","1":"1st","2":"2nd","3":"3rd",sg:"sg",pl:"pl",nom:"nom",gen:"gen",dat:"dat",acc:"acc",m:"masc",f:"fem",n:"neut"};
+const LONG = {pres:"present",impf:"imperfect",fut:"future",aor:"aorist",pf:"perfect",plpf:"pluperfect",act:"active",mid:"middle",pass:"passive",mp:"middle/passive",ind:"indicative",subj:"subjunctive",opt:"optative",imp:"imperative",inf:"infinitive",ptc:"participle","1":"1st",
+ "2":"2nd","3":"3rd",sg:"singular",pl:"plural",nom:"nominative",gen:"genitive",dat:"dative",acc:"accusative",m:"masculine",f:"feminine",n:"neuter"};
+const ROWLAB = {tense:"Tense",voice:"Voice",mood:"Mood",person:"Person",number:"Number",case:"Case",gender:"Gender"};
+const catOf = v => Object.keys(CAT).find(k => CAT[k].includes(v));
+function parseAlt(str) {
+  const o = {}; str.trim().split(/\s+/).forEach(tok => { const vals = tok.split("/"); o[catOf(vals[0])] = new Set(vals); });
+  if (o.voice && o.voice.has("mp")) o.voice = new Set(["mid","pass","mp"]);
+  return o;
+}
+function altText(str) {
+  return str.trim().split(/\s+/).map(tok => tok.split("/").map(v => LONG[v]).join(" or ")).join(" ");
+}
+let pFilter = "all", pItem = null, picks = {}, pChecked = false, pScore = {right: 0, total: 0}, pRecent = [];
+function pNew() {
+  const pool = FORMS.map((f, i) => ({f, i, alts: f[3].split("|").map(parseAlt)})).map(x => Object.assign(x, {kind: x.alts[0].tense ? "v" : "n"}))
+    .filter(x => pFilter === "all" || x.kind === pFilter).filter(x => !pRecent.includes(x.i));
+  pItem = pick(pool); pRecent.push(pItem.i); if (pRecent.length > 25) pRecent.shift();
+  picks = {}; pChecked = false; $("#pResult").innerHTML = ""; $("#pNext").textContent = "Skip"; $("#pCheck").disabled = false;
+  $("#pForm").textContent = pItem.f[0]; pRender();
+}
+function pFields() {
+  if (pItem.kind === "v") {
+    const f = ["tense","voice","mood"]; const m = picks.mood;
+    if (["ind","subj","opt","imp"].includes(m)) f.push("person","number"); else if (m === "ptc") f.push("case","number","gender");
+    return f;
+  }
+  return pItem.alts.some(a => a.gender) ? ["case","number","gender"] : ["case","number"];
+}
+function pRender() {
+  const fields = pFields();
+  Object.keys(picks).forEach(k => { if (!fields.includes(k)) delete picks[k]; });
+  $("#pRows").innerHTML = fields.map(k => `<div class="prow"><span class="lab">${ROWLAB[k]}</span><div class="row">${CAT[k].map(v => `<button class="chip" data-k="${k}" data-v="${v}" aria-pressed="${picks[k] === v}">${CHIP[v]}</button>`).join("")}</div></div>`).join("")
+    + (pItem.kind === "v" && !picks.mood ? `<p class="small muted">Choose a mood to see the remaining rows.</p>` : "");
+}
+$("#pRows").addEventListener("click", e => {
+  const b = e.target.closest("[data-k]"); if (!b || pChecked) return;
+  picks[b.dataset.k] = b.dataset.v; pRender();
+});
+$("#pCheck").addEventListener("click", () => {
+  if (pChecked) return;
+  const fields = pFields();
+  if (fields.some(k => !picks[k])) { $("#pResult").innerHTML = `<p class="small muted">Choose a value in every row first.</p>`; return; }
+  const ok = pItem.alts.some(a => Object.keys(a).every(k => picks[k] && a[k].has(picks[k])));
+  pChecked = true; pScore.total++; if (ok) pScore.right++;
+  // mark chips: chosen ones right/wrong relative to the best-matching reading
+  const best = pItem.alts.map(a => ({a, s: Object.keys(a).filter(k => picks[k] && a[k].has(picks[k])).length})).sort((x, y) => y.s - x.s)[0].a;
+  document.querySelectorAll("#pRows .chip").forEach(c => {
+    const k = c.dataset.k, v = c.dataset.v;
+    if (picks[k] === v) c.classList.add(best[k] && best[k].has(v) ? "right" : "wrong");
+    c.setAttribute("aria-pressed", "false"); c.disabled = true;
+  });
+  const [form, lemma, gloss, parses, note] = pItem.f;
+  const readings = parses.split("|").map(altText);
+  $("#pResult").innerHTML = `<div class="verdict ${ok ? "good" : "no"}"><span class="head">${ok ? "Correct" : "Not quite"}</span>
+    <span><span class="gk" style="font-size:1.15rem">${esc(form)}</span> from <span class="gk" style="font-size:1.15rem">${esc(lemma)}</span>, ‘${esc(gloss)}’</span>
+    <span>${readings.length > 1 ? "Possible readings: " : ""}${readings.map(r => `<strong>${esc(r)}</strong>`).join("; ")}</span>
+    ${note ? `<span class="small">${esc(note)}</span>` : ""}</div>`;
+  $("#pNext").textContent = "Next form"; $("#pCheck").disabled = true;
+  $("#pScore").textContent = `${pScore.right} / ${pScore.total} this session`;
+  const hist = store.get("pw.parse", {right: 0, total: 0}); hist.total++; if (ok) hist.right++; store.set("pw.parse", hist);
+});
+$("#pNext").addEventListener("click", pNew);
+$("#pFilter").addEventListener("click", e => {
+  const b = e.target.closest("[data-f]"); if (!b) return;
+  pFilter = b.dataset.f; document.querySelectorAll("#pFilter .chip").forEach(c => c.setAttribute("aria-pressed", c === b)); pRecent = []; pNew();
+});
+
+/* =========================================================
+   SYNTAX
+   ========================================================= */
+let sItem = null, sRecent = [], sScore = {right: 0, total: 0}, sAnswered = false;
+function sNew() {
+  const pool = SYN.map((x, i) => ({x, i})).filter(o => !sRecent.includes(o.i));
+  const o = pick(pool); sItem = o.x; sRecent.push(o.i); if (sRecent.length > 15) sRecent.shift();
+  sAnswered = false;
+  $("#sGreek").innerHTML = hl(sItem.g);
+  $("#sSrc").textContent = sItem.s;
+  const opts = shuffle([sItem.a].concat(shuffle(CONS.filter(c => c !== sItem.a)).slice(0, 3)));
+  $("#sOpts").innerHTML = opts.map(c => `<button data-c="${esc(c)}">${esc(c)}</button>`).join("");
+  $("#sResult").innerHTML = "";
+}
+$("#sOpts").addEventListener("click", e => {
+  const b = e.target.closest("[data-c]"); if (!b || sAnswered) return;
+  sAnswered = true; const ok = b.dataset.c === sItem.a; sScore.total++; if (ok) sScore.right++;
+  document.querySelectorAll("#sOpts button").forEach(x => { x.disabled = true; if (x.dataset.c === sItem.a) x.classList.add("right"); else if (x === b) x.classList.add("wrong"); });
+  $("#sResult").innerHTML = `<div class="verdict ${ok ? "good" : "no"}"><span class="head">${ok ? "Correct" : "It’s " + esc(sItem.a)}</span><span class="small">${esc(sItem.n)}</span><span><em>${esc(sItem.e)}</em></span></div>`;
+  $("#sScore").textContent = `${sScore.right} / ${sScore.total} this session`;
+});
+$("#sNext").addEventListener("click", sNew);
+
+/* =========================================================
+   COMPOSITION
+   ========================================================= */
+let cState = store.get("pw.comp", {deck: "t1", pos: {}, grades: {}});
+function cDeckItems() {
+  if (cState.deck === "bt") return SYN.map((x, i) => ({id: "bt" + i, en: x.e, models: [x.g.replace(/[⟦⟧]/g, "")], hint: x.s + " · focus on: " + x.a}));
+  return COMP.map((c, i) => ({c, i})).filter(o => o.c[0] === cState.deck).map(o => ({id: "c" + o.i, en: o.c[1], models: o.c[2].split(" || "), hint: o.c[3]}));
+}
+function cRender() {
+  const items = cDeckItems(); const pos = Math.min(cState.pos[cState.deck] || 0, items.length - 1); const it = items[pos];
+  $("#cDeck").value = cState.deck;
+  $("#cPos").textContent = `${pos + 1} of ${items.length}` + (cState.grades[it.id] ? ` · last time: ${cState.grades[it.id]}` : "");
+  $("#cPrompt").textContent = it.en; $("#cHint").textContent = it.hint; $("#cHint").hidden = true; $("#cHintBtn").textContent = "Show hint";
+  $("#cResult").innerHTML = "";
+  const drafts = store.get("pw.drafts", {}); $("#cInput").value = drafts[it.id] || "";
+}
+function cCurrent() { const items = cDeckItems(); return items[Math.min(cState.pos[cState.deck] || 0, items.length - 1)]; }
+$("#cDeck").addEventListener("change", e => { cState.deck = e.target.value; store.set("pw.comp", cState); cRender(); });
+$("#cHintBtn").addEventListener("click", () => { const h = $("#cHint"); h.hidden = !h.hidden; $("#cHintBtn").textContent = h.hidden ? "Show hint" : "Hide hint"; });
+$("#cBetaHelpBtn").addEventListener("click", () => { $("#cBetaHelp").hidden = !$("#cBetaHelp").hidden; });
+$("#cInput").addEventListener("input", e => {
+  const ta = e.target;
+  if ($("#cBeta").checked) {
+    const pos = ta.selectionStart; const before = ta.value.slice(0, pos), after = ta.value.slice(pos);
+    const nb = betaConvert(before), all = betaConvert(before + after);
+    if (all !== ta.value) { ta.value = all; const p = Math.min(nb.length, all.length); ta.setSelectionRange(p, p); }
+  }
+  const d = store.get("pw.drafts", {}); d[cCurrent().id] = ta.value; store.set("pw.drafts", d);
+});
+function cMove(n) { const items = cDeckItems(); const p = ((cState.pos[cState.deck] || 0) + n + items.length) % items.length; cState.pos[cState.deck] = p; store.set("pw.comp", cState); cRender(); }
+$("#cNext").addEventListener("click", () => cMove(1));
+$("#cPrev").addEventListener("click", () => cMove(-1));
+$("#cCompare").addEventListener("click", () => {
+  const it = cCurrent(); const mine = new Set(strip($("#cInput").value));
+  const scored = it.models.map(m => { const w = strip(m); return {m, w, hit: w.filter(x => mine.has(x)).length}; }).sort((a, b) => b.hit / b.w.length - a.hit / a.w.length);
+  const best = scored[0];
+  const show = m => m.split(/(\s+)/).map(tok => { const s = strip(tok)[0]; return s && mine.has(s) ? `<span class="hit">${esc(tok)}</span>` : esc(tok); }).join("");
+  $("#cResult").innerHTML = `<div class="verdict" style="background:var(--porphyry-soft)">
+    <span class="head" style="color:var(--porphyry)">${it.models.length > 1 ? "Models" : "Model"}</span>
+    ${scored.map(s => `<div class="model">${show(s.m)}</div>`).join("")}
+    <span class="small muted">${mine.size ? `${best.hit} of ${best.w.length} model words appear in your version (accents ignored; green = matched).` : "Write your version first to see which words match."}</span>
+    <div class="row">${["Got it","Partly","Missed"].map(g => `<button class="small" data-cg="${g}">${g}</button>`).join("")}</div></div>`;
+});
+$("#cResult").addEventListener("click", e => {
+  const b = e.target.closest("[data-cg]"); if (!b) return;
+  cState.grades[cCurrent().id] = b.dataset.cg; store.set("pw.comp", cState); cMove(1);
+});
+
+/* =========================================================
+   WORKSHEETS
+   ========================================================= */
+const lines = n => `<div class="lines">${"<div></div>".repeat(n)}</div>`;
+function wSetup() {
+  $("#wSet").innerHTML = SET_ORDER.filter(k => k !== "parts").map(k => `<option value="${k}">${esc(SETS[k].name)}</option>`).join("") + `<option value="all">All decks</option>`;
+  $("#wVerb").innerHTML = SYNOPSIS_VERBS.map(v => `<option>${v}</option>`).join("");
+  const sync = () => { const t = $("#wType").value; $("#wSet").hidden = !["fold","recall"].includes(t); $("#wVerb").hidden = t !== "synopsis"; $("#wCount").hidden = ["synopsis","colo","decl"].includes(t); };
+  $("#wType").addEventListener("change", () => { sync(); wMake(); });
+  ["#wSet","#wVerb","#wCount","#wKey"].forEach(s => $(s).addEventListener("change", wMake));
+  $("#wMake").addEventListener("click", wMake); sync();
+}
+function head(title, inst) { return `<h4>${title}</h4><div class="inst">${inst} &nbsp;·&nbsp; Name/date: ____________________</div>`; }
+function wMake() {
+  const t = $("#wType").value, n = +$("#wCount").value, key = $("#wKey").checked; let h = "";
+  if (t === "fold" || t === "recall") {
+    const k = $("#wSet").value; const items = shuffle(k === "all" ? CARDS.filter(c => !c.pp) : CARDS.filter(c => c.set === k)).slice(0, n);
+    const nm = k === "all" ? "Mixed decks" : SETS[k].name;
+    if (t === "fold") h = head("Vocabulary fold sheet: " + esc(nm), "Fold along the dashed line. Test Greek → English, then English → Greek. Tick misses.") +
+      `<table class="fold"><tbody>${items.map(c => `<tr><td class="gk">${esc(c.g)}</td><td class="en">${esc(c.e)}</td></tr>`).join("")}</tbody></table>`;
+    else h = head("Vocabulary recall: " + esc(nm), "Write the meaning and, for nouns, the genitive and article.") +
+      `<table><thead><tr><th>Greek</th><th>Meaning</th></tr></thead><tbody>${items.map(c => `<tr><td class="gk" style="width:40%">${esc(c.g.split(",")[0])}</td><td class="blank"></td></tr>`).join("")}</tbody></table>` +
+      (key ? `<div class="key"><h4>Key</h4><table><tbody>${items.map(c => `<tr><td class="gk">${esc(c.g)}</td><td>${esc(c.e)}</td></tr>`).join("")}</tbody></table></div>` : "");
+  } else if (t === "parse") {
+    const items = shuffle(FORMS).slice(0, n);
+    h = head("Parsing grid", "Give the full parse, the dictionary form, and a meaning.") +
+      `<table><thead><tr><th>Form</th><th>Parse</th><th>Lemma</th><th>Meaning</th></tr></thead><tbody>${items.map(f => `<tr><td class="gk">${esc(f[0])}</td><td class="blank"></td><td></td><td></td></tr>`).join("")}</tbody></table>` +
+      (key ? `<div class="key"><h4>Key</h4><table><tbody>${items.map(f => `<tr><td class="gk">${esc(f[0])}</td><td>${esc(f[3].split("|").map(altText).join("; or "))}</td><td class="gk">${esc(f[1])}</td><td>${esc(f[2])}</td></tr>`).join("")}</tbody></table></div>` : "");
+  } else if (t === "pp") {
+    const items = shuffle(PARTS).slice(0, Math.min(n, PARTS.length));
+    h = head("Principal-parts ladder", "Write the five remaining principal parts. Mark any you hesitated on.") +
+      `<table><thead><tr><th>Present</th><th>Future</th><th>Aorist</th><th>Perfect</th><th>Pf. mid./pass.</th><th>Aor. pass.</th></tr></thead><tbody>${items.map(p => `<tr><td class="gk">${esc(p[0])}</td><td class="blank"></td><td></td><td></td><td></td><td></td></tr>`).join("")}</tbody></table>` +
+      (key ? `<div class="key"><h4>Key</h4><table><tbody>${items.map(p => `<tr><td class="gk">${esc(p[0])}</td><td class="gk">${esc(p[1])}</td><td>${esc(p[2])}</td></tr>`).join("")}</tbody></table></div>` : "");
+  } else if (t === "synopsis") {
+    const v = $("#wVerb").value; const pn = pick(["1st singular","2nd singular","3rd singular","1st plural","3rd plural"]);
+    const rows = [["Present","indicative"],["","subjunctive"],["","optative"],["","imperative (2nd/3rd only)"],["","infinitive"],["","participle (nom. sg. m.)"],["Imperfect","indicative"],["Future","indicative"],["","optative"],["","infinitive"],["","participle"],["Aorist","indicative"],["","subjunctive"],["","optative"],["","imperative (2nd/3rd only)"],["","infinitive"],["","participle"],["Perfect","indicative"],["","infinitive"],["","participle"]];
+    h = head(`Synopsis of <span class="gk">${esc(v)}</span> · ${pn}`, "Fill every cell. Finite moods in the person given; for the imperative use the 2nd or 3rd person. Check against Smyth and correct in red.") +
+      `<table class="grid"><thead><tr><th>Tense</th><th>Mood</th><th>Active</th><th>Middle</th><th>Passive</th></tr></thead><tbody>${rows.map(r => `<tr><td><strong>${r[0]}</strong></td><td class="small">${r[1]}</td><td class="blank"></td><td></td><td></td></tr>`).join("")}</tbody></table>`;
+  } else if (t === "decl") {
+    const items = shuffle(NOUNS_DECL).slice(0, 4); const cases = ["Nom.","Gen.","Dat.","Acc."];
+    h = head("Declension grids", "Decline each word in full. For adjectives, use the masculine (and neuter where it differs) in the margin.") +
+      items.map(w => `<div class="item"><div class="gk" style="font-size:1.2rem;margin-bottom:4px">${esc(w)}</div><table class="grid"><thead><tr><th></th><th>Singular</th><th>Plural</th></tr></thead><tbody>${cases.map(c => `<tr><td style="width:12%">${c}</td><td class="blank"></td><td></td></tr>`).join("")}</tbody></table></div>`).join("");
+  } else if (t === "syntax") {
+    const items = shuffle(SYN).slice(0, Math.min(n, 12));
+    h = head("Syntax: mark and translate", "Name the construction of the bracketed words, then translate the whole sentence.") +
+      items.map((x, i) => `<div class="item"><div class="gk" style="font-size:1.15rem;line-height:1.7">${i + 1}. ${esc(x.g).replace(/⟦/g, "[").replace(/⟧/g, "]")}</div><div class="small" style="margin-top:6px">Construction: ________________________________</div>${lines(2)}</div>`).join("") +
+      (key ? `<div class="key"><h4>Key</h4>${items.map((x, i) => `<p style="margin-bottom:8px"><strong>${i + 1}. ${esc(x.a)}.</strong> ${esc(x.e)} <span style="color:#666">(${esc(x.s)})</span></p>`).join("")}</div>` : "");
+  } else if (t === "compose") {
+    const items = shuffle(COMP).slice(0, Math.min(n, 12));
+    h = head("Composition", "Translate into Greek. Write accents. Skip a line between drafts.") +
+      items.map((c, i) => `<div class="item"><div>${i + 1}. ${esc(c[1])}</div>${lines(3)}</div>`).join("") +
+      (key ? `<div class="key"><h4>Models</h4>${items.map((c, i) => `<p class="gk" style="margin-bottom:8px">${i + 1}. ${esc(c[2].replace(" || ", "  /  "))}</p>`).join("")}</div>` : "");
+  } else if (t === "colo") {
+    const p = pick(COLO);
+    h = head("Colometry: " + p.ref, "Rewrite one clause per line, indenting each dependent clause under what it depends on. Box finite verbs, circle participles, underline infinitives, and draw arrows from relatives to antecedents. Then translate.") +
+      `<div class="wide">${esc(p.text)}</div>${lines(14)}` +
+      (key ? `<div class="key"><h4>One possible layout</h4><div class="colo">${p.lines.map(l => `<div>${esc(l)}</div>`).join("")}</div><p style="margin-top:12px">${esc(p.en)}</p></div>` : "");
+  }
+  $("#sheet").innerHTML = h;
+}
+
+/* =========================================================
+   PLAN: today, milestones, backup
+   ========================================================= */
+function renderToday() {
+  const t = today(); let due = 0, learned = 0;
+  CARDS.forEach(c => { const s = srs.cards[c.id]; if (s) { if (s.due <= t && vs.sets.includes(c.set)) due++; if (s.b >= 3) learned++; } });
+  const ph = store.get("pw.parse", {right: 0, total: 0});
+  const done = store.get("pw.ms", []).length;
+  $("#todayTiles").innerHTML =
+    `<a href="#vocab"><span class="small muted">Cards due today</span><b>${due}</b></a>` +
+    `<a href="#vocab"><span class="small muted">Words learned</span><b>${learned}</b></a>` +
+    `<a href="#parse"><span class="small muted">Parsing accuracy</span><b>${ph.total ? Math.round(100 * ph.right / ph.total) + "%" : "—"}</b></a>` +
+    `<a href="#plan" onclick="document.getElementById('milestones').scrollIntoView({behavior:'smooth'});return false"><span class="small muted">Milestones</span><b>${done}/${MILESTONES.length}</b></a>`;
+}
+function renderMilestones() {
+  const done = new Set(store.get("pw.ms", []));
+  $("#milestones").innerHTML = MILESTONES.map((m, i) => `<label><input type="checkbox" id="ms${i}" data-i="${i}" ${done.has(i) ? "checked" : ""}><span>${esc(m)}</span></label>`).join("");
+  $("#msCount").textContent = `${done.size} of ${MILESTONES.length}`;
+}
+$("#milestones").addEventListener("change", e => {
+  const done = new Set(store.get("pw.ms", [])); const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
+  store.set("pw.ms", [...done]); renderMilestones(); renderToday();
+});
+const BK_KEYS = ["pw.srs","pw.vset","pw.parse","pw.comp","pw.ms","pw.drafts"];
+$("#bkCopy").addEventListener("click", () => {
+  const data = {}; BK_KEYS.forEach(k => data[k] = store.get(k, null));
+  const txt = JSON.stringify(data); const box = $("#bkBox"); box.value = txt;
+  const done = () => { $("#bkMsg").textContent = "Copied. Paste it into the box on your other device."; };
+  try { navigator.clipboard.writeText(txt).then(done, () => { box.select(); $("#bkMsg").textContent = "Backup is in the box, selected. Copy it manually."; }); }
+  catch (e) { box.select(); $("#bkMsg").textContent = "Backup is in the box, selected. Copy it manually."; }
+});
+$("#bkLoad").addEventListener("click", () => {
+  try {
+    const data = JSON.parse($("#bkBox").value); let n = 0;
+    BK_KEYS.forEach(k => { if (data[k] != null) { store.set(k, data[k]); n++; } });
+    if (!n) throw new Error();
+    srs = store.get("pw.srs", srs); vs = store.get("pw.vset", vs); cState = store.get("pw.comp", cState);
+    renderMilestones(); renderToday(); cRender(); $("#bkMsg").textContent = "Progress restored.";
+  } catch (e) { $("#bkMsg").textContent = "That text isn’t a backup from this page. Copy the whole backup and try again."; }
+});
+
+/* ---------- boot ---------- */
+renderMilestones(); wSetup(); wMake(); pNew(); sNew(); cRender(); route();
+</script>
