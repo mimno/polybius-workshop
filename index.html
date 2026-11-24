@@ -315,6 +315,24 @@ th { font-weight: 600; color: var(--muted); font-size: .78rem; letter-spacing: .
     <div class="ms" id="milestones"></div>
   </div>
 
+  <div class="panel" id="syncPanel">
+    <div class="spread"><h3>Sync between devices</h3><span class="small muted" id="syState"></span></div>
+    <div id="syOff" class="prose">
+      <p class="muted small">Keep phone and laptop in step by saving progress to a secret GitHub Gist. Set this up once on each device with the same token. Sync only works on the GitHub Pages copy of this site.</p>
+      <ol class="small muted" style="margin:0;padding-left:1.2rem;display:grid;gap:4px">
+        <li><a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Polybius%20Workshop" target="_blank" rel="noopener">Create a GitHub token</a> with only the <strong>gist</strong> box ticked. Choose an expiration you're comfortable with.</li>
+        <li>Paste it below and press Connect. The first device creates the gist; later devices find it automatically.</li>
+      </ol>
+      <div class="row"><input type="password" id="syToken" placeholder="ghp_…" autocomplete="off" spellcheck="false" style="font:.9rem var(--f-mono);flex:1;min-width:0"><button class="primary" id="syConnect">Connect</button></div>
+      <p class="muted small">The token is stored only in this browser. It can read and write your gists and nothing else.</p>
+    </div>
+    <div id="syOn" class="row" hidden>
+      <button class="primary" id="syNow">Sync now</button>
+      <button class="ghost" id="syDisconnect">Disconnect this device</button>
+    </div>
+    <p class="small" id="syMsg" style="color:var(--bad)"></p>
+  </div>
+
   <div class="panel">
     <h3>Back up your progress</h3>
     <p class="muted small">Progress is saved in this browser only, so your phone and laptop keep separate records. To move it, copy the backup on one device and paste it into the box on the other.</p>
@@ -1075,7 +1093,7 @@ function grade(g) {
   if (g === 0) { s.b = 0; s.due = t; queue.splice(Math.min(queue.length, 3), 0, cur); qTotal++; }
   else if (g === 1) { s.b = Math.max(1, s.b); s.due = t + 1; }
   else { s.b = Math.min(s.b + (g === 2 ? 1 : 2), 8); s.due = t + IV[s.b]; }
-  s.n = (s.n || 0) + 1; srs.cards[cur.id] = s; saveSrs(); qDone++; nextCard();
+  s.n = (s.n || 0) + 1; s.t = Date.now(); srs.cards[cur.id] = s; saveSrs(); markDirty(); qDone++; nextCard();
 }
 $("#vControls").addEventListener("click", e => {
   if (e.target.closest("#vShow")) { shown = true; renderCard(); return; }
@@ -1157,7 +1175,7 @@ $("#pCheck").addEventListener("click", () => {
     ${note ? `<span class="small">${esc(note)}</span>` : ""}</div>`;
   $("#pNext").textContent = "Next form"; $("#pCheck").disabled = true;
   $("#pScore").textContent = `${pScore.right} / ${pScore.total} this session`;
-  const hist = store.get("pw.parse", {right: 0, total: 0}); hist.total++; if (ok) hist.right++; store.set("pw.parse", hist);
+  const hist = store.get("pw.parse", {right: 0, total: 0}); hist.total++; if (ok) hist.right++; store.set("pw.parse", hist); markDirty();
 });
 $("#pNext").addEventListener("click", pNew);
 $("#pFilter").addEventListener("click", e => {
@@ -1199,7 +1217,8 @@ function cDeckItems() {
 function cRender() {
   const items = cDeckItems(); const pos = Math.min(cState.pos[cState.deck] || 0, items.length - 1); const it = items[pos];
   $("#cDeck").value = cState.deck;
-  $("#cPos").textContent = `${pos + 1} of ${items.length}` + (cState.grades[it.id] ? ` · last time: ${cState.grades[it.id]}` : "");
+  const lg = cState.grades[it.id]; const lgText = lg && (typeof lg === "string" ? lg : lg.g);
+  $("#cPos").textContent = `${pos + 1} of ${items.length}` + (lgText ? ` · last time: ${lgText}` : "");
   $("#cPrompt").textContent = it.en; $("#cHint").textContent = it.hint; $("#cHint").hidden = true; $("#cHintBtn").textContent = "Show hint";
   $("#cResult").innerHTML = "";
   const drafts = store.get("pw.drafts", {}); $("#cInput").value = drafts[it.id] || "";
@@ -1233,7 +1252,7 @@ $("#cCompare").addEventListener("click", () => {
 });
 $("#cResult").addEventListener("click", e => {
   const b = e.target.closest("[data-cg]"); if (!b) return;
-  cState.grades[cCurrent().id] = b.dataset.cg; store.set("pw.comp", cState); cMove(1);
+  cState.grades[cCurrent().id] = {g: b.dataset.cg, t: Date.now()}; store.set("pw.comp", cState); markDirty(); cMove(1);
 });
 
 /* =========================================================
@@ -1303,22 +1322,33 @@ function wMake() {
 function renderToday() {
   const t = today(); let due = 0, learned = 0;
   CARDS.forEach(c => { const s = srs.cards[c.id]; if (s) { if (s.due <= t && vs.sets.includes(c.set)) due++; if (s.b >= 3) learned++; } });
-  const ph = store.get("pw.parse", {right: 0, total: 0});
-  const done = store.get("pw.ms", []).length;
+  const ph = parseTotals();
+  const done = msDone().size;
   $("#todayTiles").innerHTML =
     `<a href="#vocab"><span class="small muted">Cards due today</span><b>${due}</b></a>` +
     `<a href="#vocab"><span class="small muted">Words learned</span><b>${learned}</b></a>` +
     `<a href="#parse"><span class="small muted">Parsing accuracy</span><b>${ph.total ? Math.round(100 * ph.right / ph.total) + "%" : "—"}</b></a>` +
     `<a href="#plan" onclick="document.getElementById('milestones').scrollIntoView({behavior:'smooth'});return false"><span class="small muted">Milestones</span><b>${done}/${MILESTONES.length}</b></a>`;
 }
+function msGet() {
+  const v = store.get("pw.ms", {});
+  if (Array.isArray(v)) { const o = {}; v.forEach(i => o[i] = {v: true, t: 0}); return o; }
+  return v || {};
+}
+function msDone() { const m = msGet(); return new Set(Object.keys(m).filter(k => m[k].v).map(Number)); }
+function parseTotals() {
+  const t = Object.assign({}, store.get("pw.parse", {right: 0, total: 0}));
+  Object.values(store.get("pw.parseOthers", {})).forEach(o => { t.right += o.right || 0; t.total += o.total || 0; });
+  return t;
+}
 function renderMilestones() {
-  const done = new Set(store.get("pw.ms", []));
+  const done = msDone();
   $("#milestones").innerHTML = MILESTONES.map((m, i) => `<label><input type="checkbox" id="ms${i}" data-i="${i}" ${done.has(i) ? "checked" : ""}><span>${esc(m)}</span></label>`).join("");
   $("#msCount").textContent = `${done.size} of ${MILESTONES.length}`;
 }
 $("#milestones").addEventListener("change", e => {
-  const done = new Set(store.get("pw.ms", [])); const i = +e.target.dataset.i; e.target.checked ? done.add(i) : done.delete(i);
-  store.set("pw.ms", [...done]); renderMilestones(); renderToday();
+  const m = msGet(); m[+e.target.dataset.i] = {v: e.target.checked, t: Date.now()};
+  store.set("pw.ms", m); markDirty(); renderMilestones(); renderToday();
 });
 const BK_KEYS = ["pw.srs","pw.vset","pw.parse","pw.comp","pw.ms","pw.drafts"];
 $("#bkCopy").addEventListener("click", () => {
@@ -1334,10 +1364,105 @@ $("#bkLoad").addEventListener("click", () => {
     BK_KEYS.forEach(k => { if (data[k] != null) { store.set(k, data[k]); n++; } });
     if (!n) throw new Error();
     srs = store.get("pw.srs", srs); vs = store.get("pw.vset", vs); cState = store.get("pw.comp", cState);
-    renderMilestones(); renderToday(); cRender(); $("#bkMsg").textContent = "Progress restored.";
+    renderMilestones(); renderToday(); cRender(); markDirty(); $("#bkMsg").textContent = "Progress restored.";
   } catch (e) { $("#bkMsg").textContent = "That text isn’t a backup from this page. Copy the whole backup and try again."; }
 });
 
+/* =========================================================
+   GIST SYNC
+   ========================================================= */
+const SYNC_FILE = "polybius-workshop.json";
+let sync = store.get("pw.sync", null), syncing = false, syncTimer = null;
+const DEVICE = store.get("pw.device", null) || (() => { const d = Math.random().toString(36).slice(2, 10); store.set("pw.device", d); return d; })();
+const tOf = x => (x && x.t) || 0;
+const newerCard = (a, b) => tOf(a) > tOf(b) || (tOf(a) === tOf(b) && (a.n || 0) > (b.n || 0));
+const newerT = (a, b) => tOf(a) > tOf(b);
+function mergeMap(local, remote, newer) {
+  const out = Object.assign({}, local);
+  Object.keys(remote || {}).forEach(k => { if (!out[k] || newer(remote[k], out[k])) out[k] = remote[k]; });
+  return out;
+}
+const normGrades = g => { const o = {}; Object.keys(g || {}).forEach(k => o[k] = typeof g[k] === "string" ? {g: g[k], t: 0} : g[k]); return o; };
+function snapshot() {
+  return {v: 1, updated: new Date().toISOString(), cards: srs.cards, ms: msGet(), comp: normGrades(cState.grades),
+    parse: Object.assign({}, store.get("pw.parseOthers", {}), {[DEVICE]: store.get("pw.parse", {right: 0, total: 0})})};
+}
+function mergeIn(r) {
+  srs.cards = mergeMap(srs.cards, r.cards, newerCard); saveSrs();
+  store.set("pw.ms", mergeMap(msGet(), r.ms, newerT));
+  cState.grades = mergeMap(normGrades(cState.grades), normGrades(r.comp), newerT); store.set("pw.comp", cState);
+  const others = Object.assign({}, r.parse || {}); delete others[DEVICE]; store.set("pw.parseOthers", others);
+}
+async function gh(path, opts = {}) {
+  const r = await fetch("https://api.github.com" + path, Object.assign({}, opts, {headers: {Authorization: "Bearer " + sync.token, Accept: "application/vnd.github+json", "Content-Type": "application/json"}}));
+  if (!r.ok) {
+    const e = new Error(r.status === 401 ? "GitHub rejected the token. It may have expired or been revoked; disconnect and connect with a new one."
+      : r.status === 403 || r.status === 404 ? "GitHub refused access to the gist. Check that the token has the gist scope."
+      : "GitHub returned an error (" + r.status + "). Try again in a minute.");
+    e.status = r.status; throw e;
+  }
+  return r.json();
+}
+function ago(ms) {
+  const s = Math.round((Date.now() - ms) / 1000);
+  if (s < 60) return "just now"; if (s < 3600) return Math.round(s / 60) + " min ago"; if (s < 86400) return Math.round(s / 3600) + " h ago";
+  return new Date(ms).toLocaleDateString();
+}
+function renderSync(msg) {
+  $("#syOff").hidden = !!sync; $("#syOn").hidden = !sync;
+  $("#syState").textContent = !sync ? "Not connected" : syncing ? "Syncing…" : sync.last ? "Last synced " + ago(sync.last) + (sync.dirty ? " · changes waiting" : "") : "Connected";
+  if (msg !== undefined) $("#syMsg").textContent = msg;
+}
+async function syncNow() {
+  if (!sync || syncing) return false;
+  syncing = true; renderSync("");
+  try {
+    if (!sync.gist) {
+      const list = await gh("/gists?per_page=100");
+      const g = list.find(x => x.files && x.files[SYNC_FILE]); if (g) sync.gist = g.id;
+    }
+    if (sync.gist) {
+      const g = await gh("/gists/" + sync.gist); const f = g.files && g.files[SYNC_FILE];
+      if (f) { const text = f.truncated ? await (await fetch(f.raw_url)).text() : f.content; if (text) mergeIn(JSON.parse(text)); }
+    }
+    const files = {[SYNC_FILE]: {content: JSON.stringify(snapshot())}};
+    if (sync.gist) await gh("/gists/" + sync.gist, {method: "PATCH", body: JSON.stringify({files})});
+    else { const g = await gh("/gists", {method: "POST", body: JSON.stringify({description: "Polybius Workshop progress (synced by the site; don't edit)", public: false, files})}); sync.gist = g.id; }
+    sync.last = Date.now(); sync.dirty = false; store.set("pw.sync", sync);
+    syncing = false; renderSync("");
+    renderMilestones(); renderToday(); if (!$("#v-vocab").hidden) { renderSetPick(); renderCard(); } if (!$("#v-compose").hidden) cRender();
+    return true;
+  } catch (e) {
+    syncing = false;
+    renderSync(e.status ? e.message : "Couldn’t reach GitHub. Sync works only on the GitHub Pages copy of this site and needs a connection. Your progress is still saved on this device.");
+    return false;
+  }
+}
+function markDirty() {
+  if (!sync) return;
+  sync.dirty = true; store.set("pw.sync", sync); renderSync();
+  clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 15000);
+}
+$("#syConnect").addEventListener("click", async () => {
+  const token = $("#syToken").value.trim();
+  if (!token) { renderSync("Paste a token first."); return; }
+  sync = {token, gist: null, dirty: true}; store.set("pw.sync", sync);
+  const ok = await syncNow();
+  if (!ok) { const m = $("#syMsg").textContent; sync = null; store.set("pw.sync", null); renderSync(m); }
+  else { $("#syToken").value = ""; }
+});
+$("#syNow").addEventListener("click", syncNow);
+$("#syDisconnect").addEventListener("click", () => {
+  sync = null; store.set("pw.sync", null); clearTimeout(syncTimer);
+  renderSync("Disconnected. Progress stays on this device; the gist is unchanged.");
+});
+document.addEventListener("visibilitychange", () => {
+  if (!sync) return;
+  if (document.visibilityState === "hidden" && sync.dirty) syncNow();
+  if (document.visibilityState === "visible" && (!sync.last || Date.now() - sync.last > 60000)) syncNow();
+});
+setInterval(() => { if (sync && !syncing) renderSync(); }, 30000);
+
 /* ---------- boot ---------- */
-renderMilestones(); wSetup(); wMake(); pNew(); sNew(); cRender(); route();
+renderMilestones(); wSetup(); wMake(); pNew(); sNew(); cRender(); route(); renderSync(); if (sync) syncNow();
 </script>
